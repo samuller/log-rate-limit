@@ -12,6 +12,7 @@ pytest = "^5.2"
 black = "^22.10.0"
 flake8 = "^5.0.4"
 mypy = "^0.990"
+flake8-docstrings = "^1.6.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

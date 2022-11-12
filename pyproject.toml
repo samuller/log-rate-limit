@@ -8,7 +8,7 @@ authors = ["Simon Muller <samullers@gmail.com>"]
 python = "^3.8"
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^5.2"
+pytest = "^7.2.0"
 pytest-cov = "^4.0.0"
 black = "^22.10.0"
 flake8 = "^5.0.4"

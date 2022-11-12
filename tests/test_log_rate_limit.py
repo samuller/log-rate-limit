@@ -134,3 +134,26 @@ def test_log_limit_summary(caplog):
     assert "___" not in caplog.text
     assert all([line in caplog.text for line in generate_lines(2)])
     assert "\n+ skipped 3 logs due to rate-limiting" in caplog.text
+
+
+def test_log_limit_allow_next_n(caplog):
+    """Test the summary functionality."""
+    # Setup logging.
+    _log = logging.getLogger(get_test_name())
+    _log.setLevel(logging.INFO)
+
+    # Setup to filter all logs with 1-second limit.
+    _log.addFilter(RateLimitFilter(1, filter_all=True, allow_next_n=2))
+
+    _log.info("Line 1")
+    _log.info("Line 2")
+    _log.info("Line 3")
+    _log.info("___")
+    _log.info("___")
+    time.sleep(1.1)
+    _log.info("Line 4")
+    _log.info("Line 5")
+    _log.info("Line 6")
+    _log.info("___")
+    assert "___" not in caplog.text
+    assert all([line in caplog.text for line in generate_lines(6)])

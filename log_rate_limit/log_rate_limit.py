@@ -15,7 +15,7 @@ class RateLimitFilter(logging.Filter):
     def __init__(
         self,
         min_time_sec: float,
-        allow_next_n: int = 0,  # TODO
+        allow_next_n: int = 0,
         filter_all: bool = False,
         summary: bool = True,
         summary_msg: str = "+ skipped {numskip} logs due to rate-limiting",
@@ -28,7 +28,8 @@ class RateLimitFilter(logging.Filter):
         min_time_sec
             The minimum time in seconds allowed between log messages of the same stream.
         allow_next_n
-            After each allowed log, also allow the immediate next `allow_next_n` logs through, ignoring the rate-limit.
+            After each allowed log, also allow the immediate next `allow_next_n` count of logs to ignore the rate-limit
+            and be allowed.
         filter_all
             If true then even logs without any stream_id (i.e. `None` stream_id) will also be rate limited.
         name
@@ -44,6 +45,8 @@ class RateLimitFilter(logging.Filter):
         # All these dictionaries are per-stream with stream_ids as their key.
         self._next_valid_time: Dict[str, float] = {}
         self._skipped_log_count: Dict[str, int] = defaultdict(int)
+        # Count of log attempts since last allowed log that reset timer.
+        self._count_since_reset_log: Dict[str, int] = defaultdict(int)
 
     def _reset_timer(self, stream_id: str, min_time_sec: float) -> None:
         self._next_valid_time[stream_id] = time.time() + min_time_sec
@@ -63,19 +66,23 @@ class RateLimitFilter(logging.Filter):
         stream_id = self._get(record, "stream_id")
         min_time_sec = self._get(record, "min_time_sec", self._min_time_sec)
         summary = self._summary
+        skip_count = self._skipped_log_count[stream_id]
+        since_count = self._count_since_reset_log[stream_id]
 
         if not self._filter_all and stream_id is None:
             return True
 
         # Inner function to prevent code duplication.
-        def prep_to_allow_msg() -> None:
-            skiplen = self._skipped_log_count[stream_id]
-            if summary and skiplen > 0:
+        def prep_to_allow_msg(reset_all: bool = True) -> None:
+            if summary and skip_count > 0:
                 # Change message to indicate a summary of skipped logs.
-                added_msg = self._summary_msg.format(numskip=skiplen)
+                added_msg = self._summary_msg.format(numskip=skip_count)
                 record.msg = f"{record.msg}\n{added_msg}"
-            self._skipped_log_count[stream_id] = 0
-            self._reset_timer(stream_id, min_time_sec)
+            # Reset counters and timers.
+            if reset_all:
+                self._skipped_log_count[stream_id] = 0
+                self._count_since_reset_log[stream_id] = 0
+                self._reset_timer(stream_id, min_time_sec)
 
         # Allow if this is the first message for this stream.
         if stream_id not in self._next_valid_time:
@@ -88,9 +95,16 @@ class RateLimitFilter(logging.Filter):
             prep_to_allow_msg()
             return True
 
+        # Logs after this point don't fully reset the timer.
+        self._count_since_reset_log[stream_id] += 1
+        # Allow if the "allow next N" option applies and this message is within a count of N of the last allowed
+        # message.
+        if since_count < self._allow_next_n:
+            prep_to_allow_msg(reset_all=False)
+            return True
+
         # Once we've reached here, we'll definitely skip this log message.
-        if summary:
-            self._skipped_log_count[stream_id] += 1
+        self._skipped_log_count[stream_id] += 1
         return False
 
 

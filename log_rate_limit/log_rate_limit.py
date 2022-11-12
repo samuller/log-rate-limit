@@ -2,7 +2,7 @@
 import time
 import logging
 from collections import defaultdict
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 
 class RateLimitFilter(logging.Filter):
@@ -111,30 +111,3 @@ def rate_limit(
     if summary_msg is not None:
         extra["summary_msg"] = summary_msg
     return extra
-
-
-if __name__ == "__main__":
-    # Get root log
-    # _log = logging.getLogger()
-    _log = logging.getLogger(__name__)
-
-    _log.addHandler(logging.StreamHandler())
-    _log.setLevel(logging.INFO)
-
-    # Default per stream?
-    # _log.addFilter(RateLimitFilter({None: 5, biggest: 30}, filter_all=True))
-    _log.addFilter(RateLimitFilter(5, filter_all=True))
-    _log.info("Line 1")
-    _log.info("Skip")
-    _log.info("Skip", extra=rate_limit(stream_id=None))
-    _log.info("Other Line 1", extra=rate_limit(stream_id="other"))
-    _log.info("Other Skip", extra=rate_limit(stream_id="other"))
-    _log.info("BIG Log Line 1", extra=rate_limit(stream_id="big", min_time_sec=30))
-    _log.info("BIG Skip", extra=rate_limit(stream_id="big"))
-    _log.info("BIGGEST Log Line 1", extra=rate_limit(stream_id="biggest"))
-    time.sleep(5.1)
-    _log.info("Line 2")
-    _log.info("Skip", extra={**rate_limit(stream_id=None), "other_field": "other_value"})
-    _log.info("Other Line 2", extra=rate_limit(stream_id="other"))
-    _log.info("BIG skip", extra={"stream_id": "big", "min_time_sec": 30})
-    _log.info("BIGGEST skip", extra=rate_limit(stream_id="biggest"))

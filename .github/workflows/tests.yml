@@ -1,0 +1,43 @@
+# See updated starting example at https://github.com/actions/starter-workflows/blob/main/ci/python-package.yml
+name: tests
+
+on:
+  # Run this workflow every time a new commit is pushed to repo
+  push:
+  # Also run it once weekly to check for impact due to changes in the OS,
+  # python, postgres, or any external packages/dependencies
+  schedule:
+  - cron: '22 14 * * fri'
+
+jobs:
+  run-tests:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Test with specific supported versions
+          - name: supported
+            os: ubuntu-20.04
+            python: 3.7
+          # Test everything with latest versions
+          - name: latest
+            os: ubuntu-22.04
+            python: 3.x
+
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - name: Install Python ${{ matrix.python }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install poetry
+        shell: bash
+        run: |
+          curl -sSL https://install.python-poetry.org | python -
+      - name: Install dependencies
+        run: poetry install
+      - name: Check for linting issues
+        run: ./run.sh lint

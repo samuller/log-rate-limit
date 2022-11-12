@@ -4,6 +4,19 @@ version = "0.1.0"
 description = ""
 authors = ["Simon Muller <samullers@gmail.com>"]
 readme = "README.md"
+homepage = "https://github.com/samuller/log-rate-limit"
+repository = "https://github.com/samuller/log-rate-limit"
+keywords = ["logging", "log", "limit", "rate"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: Apache Software License",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: System :: Logging",
+    "Topic :: Software Development :: Libraries",
+]
+include = ["NOTICE"]
 
 [tool.poetry.dependencies]
 python = "^3.8"

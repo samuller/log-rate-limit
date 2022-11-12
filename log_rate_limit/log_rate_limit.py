@@ -43,7 +43,7 @@ class RateLimitFilter(logging.Filter):
         self._summary_msg = summary_msg
         # All these dictionaries are per-stream with stream_ids as their key.
         self._next_valid_time: Dict[str, float] = {}
-        self._skipped_logs: Dict[str, List[logging.LogRecord]] = defaultdict(list)
+        self._skipped_log_count: Dict[str, int] = defaultdict(int)
 
     def _reset_timer(self, stream_id: str, min_time_sec: float) -> None:
         self._next_valid_time[stream_id] = time.time() + min_time_sec
@@ -69,12 +69,12 @@ class RateLimitFilter(logging.Filter):
 
         # Inner function to prevent code duplication.
         def prep_to_allow_msg() -> None:
-            skiplen = len(self._skipped_logs[stream_id])
+            skiplen = self._skipped_log_count[stream_id]
             if summary and skiplen > 0:
                 # Change message to indicate a summary of skipped logs.
                 added_msg = self._summary_msg.format(numskip=skiplen)
                 record.msg = f"{record.msg}\n{added_msg}"
-            self._skipped_logs[stream_id].clear()
+            self._skipped_log_count[stream_id] = 0
             self._reset_timer(stream_id, min_time_sec)
 
         # Allow if this is the first message for this stream.
@@ -90,7 +90,7 @@ class RateLimitFilter(logging.Filter):
 
         # Once we've reached here, we'll definitely skip this log message.
         if summary:
-            self._skipped_logs[stream_id].append(record)
+            self._skipped_log_count[stream_id] += 1
         return False
 
 

@@ -3,6 +3,7 @@ name = "log-rate-limit"
 version = "0.1.0"
 description = ""
 authors = ["Simon Muller <samullers@gmail.com>"]
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.8"

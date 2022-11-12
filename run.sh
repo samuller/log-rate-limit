@@ -30,7 +30,7 @@ format() {
 }
 
 test() {
-    poetry run pytest --cov=log_rate_limit
+    poetry run pytest --cov=log_rate_limit --cov-report=term --cov-report=html --cov-fail-under=100
 }
 
 if [ "$#" -gt 1 ]; then

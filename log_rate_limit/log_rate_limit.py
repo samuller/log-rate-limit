@@ -65,7 +65,7 @@ class RateLimitFilter(logging.Filter):
         """
         stream_id = self._get(record, "stream_id")
         min_time_sec = self._get(record, "min_time_sec", self._min_time_sec)
-        summary = self._summary
+        summary = self._get(record, "summary", self._summary)
         skip_count = self._skipped_log_count[stream_id]
         since_count = self._count_since_reset_log[stream_id]
 

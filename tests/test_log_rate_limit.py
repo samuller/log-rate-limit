@@ -130,10 +130,17 @@ def test_log_limit_summary(caplog):
     _log.info("___")
     time.sleep(1.1)
     _log.info("Line 2")
+    # 2 skipped logs.
     _log.info("___")
+    _log.info("___")
+    time.sleep(1.1)
+    # Dynamically override summary so we don't print it.
+    _log.info("Line 3", extra=rate_limit(summary=False))
+
     assert "___" not in caplog.text
-    assert all([line in caplog.text for line in generate_lines(2)])
+    assert all([line in caplog.text for line in generate_lines(3)])
     assert "\n+ skipped 3 logs due to rate-limiting" in caplog.text
+    assert "skipped 2 logs" not in caplog.text
 
 
 def test_log_limit_allow_next_n(caplog):

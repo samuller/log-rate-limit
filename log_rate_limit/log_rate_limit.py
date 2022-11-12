@@ -29,11 +29,17 @@ class RateLimitFilter(logging.Filter):
             The minimum time in seconds allowed between log messages of the same stream.
         allow_next_n
             After each allowed log, also allow the immediate next `allow_next_n` count of logs to ignore the rate-limit
-            and be allowed.
+            and be allowed. Can also be used to approximate allowing a burst of logs every now and then.
         filter_all
             If true then even logs without any stream_id (i.e. `None` stream_id) will also be rate limited.
+        summary
+            If a summary message should be shown along with allowed logs to summarise logs that were suppressed/skipped.
+        summary_msg
+            The summary message used to summarise logs that were suppressed/skipped.
         name
-            Filters are hierarchical and those with name "A.B" will only apply to "A.B" and "A.B.C", etc. but not "A".
+            Filter names form a logger hierarchical where they apply only to current or lower levels, e.g. with name
+            "A.B" it will apply to "A.B" and also "A.B.C", "A.B.C.D", etc. but not to "A". See Python docs:
+            https://docs.python.org/3/library/logging.html#filter-objects
         """
         super().__init__(name)
         # These values are all defaults that can be temporarily overriden on-the-fly.

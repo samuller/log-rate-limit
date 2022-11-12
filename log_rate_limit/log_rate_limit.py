@@ -63,9 +63,12 @@ class RateLimitFilter(logging.Filter):
         -------
         True if log should be shown or else False if log should be skipped/hidden/filtered out.
         """
+        # Get variables that can be dynamically overridden, or else will use init-defaults.
         stream_id = self._get(record, "stream_id")
         min_time_sec = self._get(record, "min_time_sec", self._min_time_sec)
+        allow_next_n = self._get(record, "allow_next_n", self._allow_next_n)
         summary = self._get(record, "summary", self._summary)
+        summary_msg = self._get(record, "summary_msg", self._summary_msg)
         skip_count = self._skipped_log_count[stream_id]
         since_count = self._count_since_reset_log[stream_id]
 
@@ -76,7 +79,7 @@ class RateLimitFilter(logging.Filter):
         def prep_to_allow_msg(reset_all: bool = True) -> None:
             if summary and skip_count > 0:
                 # Change message to indicate a summary of skipped logs.
-                added_msg = self._summary_msg.format(numskip=skip_count)
+                added_msg = summary_msg.format(numskip=skip_count)
                 record.msg = f"{record.msg}\n{added_msg}"
             # Reset counters and timers.
             if reset_all:
@@ -99,7 +102,7 @@ class RateLimitFilter(logging.Filter):
         self._count_since_reset_log[stream_id] += 1
         # Allow if the "allow next N" option applies and this message is within a count of N of the last allowed
         # message.
-        if since_count < self._allow_next_n:
+        if since_count < allow_next_n:
             prep_to_allow_msg(reset_all=False)
             return True
 

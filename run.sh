@@ -30,7 +30,7 @@ format() {
 }
 
 test() {
-    poetry run pytest
+    poetry run pytest --cov=log_rate_limit
 }
 
 if [ "$#" -gt 1 ]; then

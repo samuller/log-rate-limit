@@ -35,9 +35,10 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: Install poetry
         shell: bash
-        run: |
-          curl -sSL https://install.python-poetry.org | python -
+        run: curl -sSL https://install.python-poetry.org | python -
       - name: Install dependencies
         run: poetry install
       - name: Check for linting issues
         run: ./run.sh lint
+      - name: Test with pytest
+        run: ./run.sh test

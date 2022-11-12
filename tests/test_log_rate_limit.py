@@ -59,7 +59,7 @@ def test_log_limit_filter_all(caplog) -> None:
     assert all([line in caplog.text for line in generate_lines(2)])
 
 
-def test_logs_limit_streams(caplog) -> None:
+def test_log_limit_streams(caplog) -> None:
     """Test that log limiting applies separately to different streams."""
     # Setup logging.
     _log = logging.getLogger(get_test_name())
@@ -82,7 +82,7 @@ def test_logs_limit_streams(caplog) -> None:
     assert all([line in caplog.text for line in generate_lines(4)])
 
 
-def test_logs_limit_dynamic_min_time_sec(caplog):
+def test_log_limit_dynamic_min_time_sec(caplog):
     """Test that the min_time_sec value can be dynamically changed per-stream."""
     # Setup logging.
     _log = logging.getLogger(get_test_name())
@@ -96,16 +96,41 @@ def test_logs_limit_dynamic_min_time_sec(caplog):
     # Test default limit first.
     _log.info("___", extra=rate_limit(stream_id="stream1"))
     time.sleep(1.1)
+    _log.info("Line 2", extra=rate_limit(stream_id="stream2"))
     # Dynamically change min_time_sec.
-    _log.info("Line 2", extra=rate_limit(stream_id="stream1", min_time_sec=3))
+    _log.info("Line 3", extra=rate_limit(stream_id="stream1", min_time_sec=3))
     _log.info("___", extra=rate_limit(stream_id="stream1"))
     time.sleep(1.1)
+    # Second stream remains unaffected.
+    _log.info("Line 4", extra=rate_limit(stream_id="stream2"))
     _log.info("___", extra=rate_limit(stream_id="stream1"))
     time.sleep(2)  # Already had 1.1 second wait, so this totals 3.1.
-    _log.info("Line 3", extra=rate_limit(stream_id="stream1"))
+    _log.info("Line 5", extra=rate_limit(stream_id="stream1"))
     time.sleep(1.1)
     # Test that change to min_time_sec only applied in one instance.
-    _log.info("Line 4", extra=rate_limit(stream_id="stream1"))
+    _log.info("Line 6", extra=rate_limit(stream_id="stream1"))
 
     assert "___" not in caplog.text
-    assert all([line in caplog.text for line in generate_lines(4)])
+    assert all([line in caplog.text for line in generate_lines(6)])
+
+
+def test_log_limit_summary(caplog):
+    """Test the summary functionality."""
+    # Setup logging.
+    _log = logging.getLogger(get_test_name())
+    _log.setLevel(logging.INFO)
+
+    # Setup to filter all logs with 1-second limit.
+    _log.addFilter(RateLimitFilter(1, filter_all=True, summary=True))
+
+    _log.info("Line 1")
+    # 3 skipped logs.
+    _log.info("___")
+    _log.info("___")
+    _log.info("___")
+    time.sleep(1.1)
+    _log.info("Line 2")
+    _log.info("___")
+    assert "___" not in caplog.text
+    assert all([line in caplog.text for line in generate_lines(2)])
+    assert "\n+ skipped 3 logs due to rate-limiting" in caplog.text

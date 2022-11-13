@@ -201,10 +201,9 @@ def test_log_limit_allow_next_n(caplog):
     _log.info("___")
     _log.info("___")
     time.sleep(1.1)
-    _log.info("Line 4")
+    # Dynamically override value in this instance.
+    _log.info("Line 4", extra=RateLimit(allow_next_n=1))
     _log.info("Line 5")
-    # Dynamically override value in this instance... doesn't actually make sense here -> "next" in name doesn't fit
-    # with implementation.
-    _log.info("___", extra=RateLimit(allow_next_n=1))
+    _log.info("___")
     assert "___" not in caplog.text
     assert all([line in caplog.text for line in generate_lines(5)])

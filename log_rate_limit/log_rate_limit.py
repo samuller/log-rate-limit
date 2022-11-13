@@ -42,8 +42,9 @@ class StreamRateLimitFilter(logging.Filter):
               values will need to be manually specified on a case-by-case basis.
         filter_undefined
             If logs without defined `stream_id`s should be filtered:
-            - If true then even logs without any stream_id (i.e. `stream_id=None`) will also be rate-limited. (Note
-              that if `all_unique=True` then logs will only have `stream_id=None` when manually specified.)
+            - If `filter_undefined=True` then even logs without any stream_id (i.e. `stream_id=None`) will also be
+              rate-limited. (Note that if `all_unique=True` then logs will only have `stream_id=None` when manually
+              specified.)
             - If `filter_undefined=False`, then all logs with `stream_id=None` will not have any rate-limit applied to
               them.
         summary
@@ -88,10 +89,13 @@ class StreamRateLimitFilter(logging.Filter):
         global TEST_MODE
         if TEST_MODE:
             _test_default_overrides(record)
+
+        default_stream_id = None
+        if self._all_unique:
+            # Assign unique default stream_ids.
+            default_stream_id = f"{record.filename}:{record.lineno}"
         # Get variables that can be dynamically overridden, or else will use init-defaults.
-        stream_id = self._get(record, "stream_id", None)
-        if self._all_unique and stream_id is None:
-            stream_id = f"{record.filename}:{record.lineno}"
+        stream_id = self._get(record, "stream_id", default_stream_id)
         period_sec = self._get(record, "period_sec", self._period_sec)
         allow_next_n = self._get(record, "allow_next_n", self._allow_next_n)
         summary = self._get(record, "summary", self._summary)

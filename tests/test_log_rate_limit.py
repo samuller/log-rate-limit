@@ -34,8 +34,13 @@ def test_log_limit_default_unaffected(caplog) -> None:
         _log.info("Line 4")
     time.sleep(1.1)
     _log.info("Line 5")
+    # Check that filtering is disabled when stream_id is None.
+    for i in range(2):
+        # Changing message to avoid duplicate check from failing (and we know, from the implementation, that the
+        # message itself has no affect on filtering).
+        _log.info(f"Line {6+i}", extra=RateLimit(stream_id=None))
     assert "___" not in caplog.text
-    assert all([line in caplog.text for line in generate_lines(5)])
+    assert all([line in caplog.text for line in generate_lines(7)])
     # Confirm there are no duplicated log lines at all.
     log_lines = caplog.text.splitlines()
     assert len(log_lines) == len(set(log_lines))

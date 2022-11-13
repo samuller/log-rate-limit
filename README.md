@@ -36,4 +36,3 @@ WARNING:__main__:No really, a wolf!
 + skipped 98 logs due to rate-limiting
 ```
 Note that logs were only repeated after the `sleep()` call, and the repeated log also included an extra summary message added afterwards.
-    pip install git+https://github.com/samuller/log-rate-limit

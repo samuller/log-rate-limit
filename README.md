@@ -6,7 +6,7 @@
 [![Checked with mypy](https://img.shields.io/badge/mypy-strict-blue)](http://mypy-lang.org/)
 [![Formatted with black](https://img.shields.io/badge/code%20style-black-black)](https://black.readthedocs.io/en/stable/)
 
-A logging filter that can be used with Python's standard logging mechanism to rate-limit logs - i.e. suppress logs when they are being output too fast.
+A [logging filter](https://docs.python.org/3/library/logging.html#filter-objects) using Python's standard logging mechanisms to rate-limit logs - i.e. suppress logs when they are being output too fast.
 
 Log commands are grouped into separate **streams** that will each have their own rate limitation applied without affecting the logs in other streams. By default every log is assigned a unique stream so that only "repeated" logs will be suppressed - in this case "repeated" logs doesn't mean identical log messages, but rather logs output from the same line of code. However, logs can also be assigned streams manually to achieve various outcomes:
 - A dynamic stream id based on the message content can be used so that different messages from the same log command can also be rate-limited separately.
@@ -81,6 +81,46 @@ INFO:__main__:Status update: 1
 INFO:__main__:Status update: 2
 WARNING:__main__:Issue!
 ```
+
+### Dynamically override configuration options
+
+Some options set during creation of the initial filter can be overridden for individual log calls. This is done by adding the `extra` parameter to any specific log call, e.g.:
+```python
+# Override the rate limit for this specific log call
+logger.warning("Test1", extra=RateLimit(stream_id="stream1", period_sec=30))
+# Override the allow_next_n value for a set of logs in the same stream so that this group of logs don't restrict one
+# another from occuring consecutively
+logger.warning("Test", extra=RateLimit(stream_id="stream2", allow_next_n=2))
+logger.info("Extra", extra=RateLimit(stream_id="stream2"))
+logger.debug("Info", extra=RateLimit(stream_id="stream2"))
+```
+
+If you want to set custom options for a large group of log calls without repeatedly adding the `extra` parameter, it's possible to use a [LoggerAdapter](https://docs.python.org/3/library/logging.html#loggeradapter-objects):
+```python
+import logging
+from log_rate_limit import StreamRateLimitFilter, RateLimit
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+# Add our filter
+logger.addFilter(StreamRateLimitFilter(period_sec=1))
+
+# Use LoggerAdapter to assign additional "extra" parameters to all calls using this logger
+global_extra = RateLimit(stream_id="custom_stream", period_sec=20)
+logger = logging.LoggerAdapter(logger, global_extra)
+# Log many warnings
+for _ in range(100):
+    logger.warning("Wolf!")
+for i in range(100):
+    logger.warning("No really, a wolf!")
+```
+Which merely outputs:
+```log
+WARNING:__main__:Wolf!
+```
+Since both log calls are in the same stream.
+
+Alternatively, custom options can also be added by writing your own own [logging.Filter](https://docs.python.org/3.8/howto/logging-cookbook.html#using-filters-to-impart-contextual-information).
 
 ## Installation
 

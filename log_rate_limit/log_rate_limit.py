@@ -99,7 +99,7 @@ class StreamRateLimitFilter(logging.Filter):
         if self._all_unique:
             # Assign unique default stream_ids.
             default_stream_id = f"{record.filename}:{record.lineno}"
-        # Get variables that can be dynamically overridden, or else will use init-defaults.
+        # Get variables that can be dynamically overridden, or else use init-defaults.
         stream_id = self._get(record, "stream_id", default_stream_id)
         period_sec = self._get(record, "period_sec", self._period_sec)
         allow_next_n = self._get(record, "allow_next_n", self._allow_next_n)

@@ -81,3 +81,29 @@ INFO:__main__:Status update: 1
 INFO:__main__:Status update: 2
 WARNING:__main__:Issue!
 ```
+
+## Installation
+
+### Install from PyPI
+
+With `Python 3` installed on your system, you can run:
+
+    pip install log-rate-limit
+
+To test that installation worked, you can run:
+
+    python -c "import log_rate_limit"
+
+and you can uninstall at any time with:
+
+    pip uninstall log-rate-limit
+
+To install with poetry:
+
+    poetry add log-rate-limit
+
+### Install from Github
+
+To install the newest code directly from Github:
+
+    pip install git+https://github.com/samuller/log-rate-limit

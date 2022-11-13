@@ -10,8 +10,7 @@ TEST_MODE = False
 class StreamRateLimitFilter(logging.Filter):
     """Filter out each "stream" of logs so they don't happen too fast within a given period of time.
 
-    Logs can be separated into "streams" so that the rate-limit only applies to logs in the same stream. By default
-    all logs will be assigned to the `None` stream and will not have the rate-limit applied to them.
+    Logs can be separated into "streams" so that the rate-limit only applies to logs in the same stream.
     """
 
     def __init__(
@@ -33,14 +32,23 @@ class StreamRateLimitFilter(logging.Filter):
         allow_next_n
             After each allowed log, also allow the immediate next `allow_next_n` count of logs to ignore the rate-limit
             and be allowed. Can also be used to approximate allowing a burst of logs every now and then.
-            If true then even logs without any stream_id (i.e. `None` stream_id) will also be rate limited.
         all_unique
-            By default, auto-assign unique stream_id's to all logs by using filename and line_no. This will in-effect
+            If all logs should have unique `stream_id`s assigned to them by default. The default `stream_id` of a log
+            is thus determined as follows:
+            - If `all_unique=True` then a unique `stream_id` will be auto-assigned to all logs (by using `filename` and
+              `line_no`). This will in-effect rate-limit all repeated logs (excluding dynamic changes in the specific
+              log message itself, e.g. through formatting args).
+            - If `all_unique=False` then all logs will be default assigned `stream_id=None` and other `stream_id`
+              values will need to be manually specified on a case-by-case basis.
         filter_undefined
-            rate-limit all repeated logs (excluding dynamic changes in the specific log message itself, e.g. through
-            formatting args).
+            If logs without defined `stream_id`s should be filtered:
+            - If true then even logs without any stream_id (i.e. `stream_id=None`) will also be rate-limited. (Note
+              that if `all_unique=True` then logs will only have `stream_id=None` when manually specified.)
+            - If `filter_undefined=False`, then all logs with `stream_id=None` will not have any rate-limit applied to
+              them.
         summary
-            If a summary message should be shown along with allowed logs to summarise logs that were suppressed/skipped.
+            If a summary message should be shown along with allowed logs to summarise/mention logs that were
+            suppressed/skipped.
         summary_msg
             The summary message used to summarise logs that were suppressed/skipped.
         name
@@ -134,7 +142,8 @@ class StreamRateLimitFilter(logging.Filter):
 class RateLimit(TypedDict, total=False):
     """Easily construct a logging "extra" dict with rate-limiting parameters."""
 
-    # Manually define a stream_id for this logging record.
+    # Manually define a stream_id for this logging record. A value of `None` is valid and has specific meaning based on
+    # the filter's configuration options.
     stream_id: Optional[str]
     # The following values override the defaults (for only this record) that were set when initializing the filter.
     period_sec: float

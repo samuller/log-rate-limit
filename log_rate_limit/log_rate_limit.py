@@ -2,7 +2,7 @@
 import time
 import logging
 from collections import defaultdict
-from typing import Any, Dict, TypedDict
+from typing import Any, Dict, TypedDict, Optional
 
 
 class StreamRateLimitFilter(logging.Filter):
@@ -127,8 +127,9 @@ class StreamRateLimitFilter(logging.Filter):
 
 class RateLimit(TypedDict, total=False):
     """Easily construct a logging "extra" dict with rate-limiting parameters."""
+
     # Manually define a stream_id for this logging record.
-    stream_id: str
+    stream_id: Optional[str]
     # The following values override the defaults (for only this record) that were set when initializing the filter.
     period_sec: float
     allow_next_n: int

@@ -102,8 +102,8 @@ def test_log_limit_streams(caplog) -> None:
     assert all([line in caplog.text for line in generate_lines(4)])
 
 
-def test_log_limit_dynamic_min_time_sec(caplog):
-    """Test that the min_time_sec value can be dynamically changed per-stream."""
+def test_log_limit_dynamic_period_sec(caplog):
+    """Test that the period_sec value can be dynamically changed per-stream."""
     # Setup logging.
     _log = logging.getLogger(get_test_name())
     _log.setLevel(logging.INFO)
@@ -117,8 +117,8 @@ def test_log_limit_dynamic_min_time_sec(caplog):
     _log.info("___", extra=rate_limit(stream_id="stream1"))
     time.sleep(1.1)
     _log.info("Line 2", extra=rate_limit(stream_id="stream2"))
-    # Dynamically change min_time_sec.
-    _log.info("Line 3", extra=rate_limit(stream_id="stream1", min_time_sec=3))
+    # Dynamically change period_sec.
+    _log.info("Line 3", extra=rate_limit(stream_id="stream1", period_sec=3))
     _log.info("___", extra=rate_limit(stream_id="stream1"))
     time.sleep(1.1)
     # Second stream remains unaffected.
@@ -127,7 +127,7 @@ def test_log_limit_dynamic_min_time_sec(caplog):
     time.sleep(2)  # Already had 1.1 second wait, so this totals 3.1.
     _log.info("Line 5", extra=rate_limit(stream_id="stream1"))
     time.sleep(1.1)
-    # Test that change to min_time_sec only applied in one instance.
+    # Test that change to period_sec only applied in one instance.
     _log.info("Line 6", extra=rate_limit(stream_id="stream1"))
 
     assert "___" not in caplog.text

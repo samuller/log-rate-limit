@@ -14,7 +14,7 @@ class RateLimitFilter(logging.Filter):
 
     def __init__(
         self,
-        min_time_sec: float,
+        period_sec: float,
         allow_next_n: int = 0,
         filter_all: bool = False,
         all_unique: bool = False,
@@ -26,8 +26,8 @@ class RateLimitFilter(logging.Filter):
 
         Parameters
         ----------
-        min_time_sec
-            The minimum time in seconds allowed between log messages of the same stream.
+        period_sec
+            The minimum time period in seconds allowed between log messages of the same stream.
         allow_next_n
             After each allowed log, also allow the immediate next `allow_next_n` count of logs to ignore the rate-limit
             and be allowed. Can also be used to approximate allowing a burst of logs every now and then.
@@ -48,7 +48,7 @@ class RateLimitFilter(logging.Filter):
         """
         super().__init__(name)
         # These values are all defaults that can be temporarily overriden on-the-fly.
-        self._min_time_sec = min_time_sec
+        self._period_sec = period_sec
         self._allow_next_n = allow_next_n
         self._filter_all = filter_all
         self._all_unique = all_unique
@@ -60,8 +60,8 @@ class RateLimitFilter(logging.Filter):
         # Count of log attempts since last allowed log that reset timer.
         self._count_since_reset_log: Dict[str, int] = defaultdict(int)
 
-    def _reset_timer(self, stream_id: str, min_time_sec: float) -> None:
-        self._next_valid_time[stream_id] = time.time() + min_time_sec
+    def _reset_timer(self, stream_id: str, period_sec: float) -> None:
+        self._next_valid_time[stream_id] = time.time() + period_sec
 
     def _get(self, record: logging.LogRecord, attribute: str, default_val: Any = None) -> Any:
         if hasattr(record, attribute):
@@ -79,7 +79,7 @@ class RateLimitFilter(logging.Filter):
         stream_id = self._get(record, "stream_id", None)
         if self._all_unique and stream_id is None:
             stream_id = f"{record.filename}:{record.lineno}"
-        min_time_sec = self._get(record, "min_time_sec", self._min_time_sec)
+        period_sec = self._get(record, "period_sec", self._period_sec)
         allow_next_n = self._get(record, "allow_next_n", self._allow_next_n)
         summary = self._get(record, "summary", self._summary)
         summary_msg = self._get(record, "summary_msg", self._summary_msg)
@@ -99,7 +99,7 @@ class RateLimitFilter(logging.Filter):
             if reset_all:
                 self._skipped_log_count[stream_id] = 0
                 self._count_since_reset_log[stream_id] = 0
-                self._reset_timer(stream_id, min_time_sec)
+                self._reset_timer(stream_id, period_sec)
 
         # Allow if this is the first message for this stream.
         if stream_id not in self._next_valid_time:
@@ -127,7 +127,7 @@ class RateLimitFilter(logging.Filter):
 
 def rate_limit(
     stream_id: Optional[str] = None,
-    min_time_sec: Optional[float] = None,
+    period_sec: Optional[float] = None,
     summary: Optional[bool] = None,
     summary_msg: Optional[str] = None,
 ) -> Dict[str, Any]:
@@ -135,8 +135,8 @@ def rate_limit(
     extra: Dict[str, Any] = {}
     if stream_id is not None:
         extra["stream_id"] = stream_id
-    if min_time_sec is not None:
-        extra["min_time_sec"] = min_time_sec
+    if period_sec is not None:
+        extra["period_sec"] = period_sec
     if summary is not None:
         extra["summary"] = summary
     if summary_msg is not None:

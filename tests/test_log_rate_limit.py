@@ -2,7 +2,7 @@ import time
 import inspect
 import logging
 
-from log_rate_limit import StreamRateLimitFilter, rate_limit
+from log_rate_limit import StreamRateLimitFilter, RateLimit
 
 
 def get_test_name():
@@ -28,7 +28,7 @@ def test_log_limit_all_unaffected(caplog) -> None:
 
     _log.info("Line 1")
     _log.info("Line 2")
-    _log.info("Line 3", extra=rate_limit(stream_id=None))
+    _log.info("Line 3", extra=RateLimit(stream_id=None))
     time.sleep(1.1)
     _log.info("Line 4")
     assert "___" not in caplog.text
@@ -67,11 +67,11 @@ def test_log_limit_filter_all(caplog) -> None:
     _log.info("Line 1")
     _log.info("___")
     # Example: all logs default to stream_id=None.
-    _log.info("___", extra=rate_limit(stream_id=None))
-    # Example: rate_limit() is just a short-hand for creating an dict for the "extra" parameter.
+    _log.info("___", extra=RateLimit(stream_id=None))
+    # Example: RateLimit() is just a short-hand for creating an dict for the "extra" parameter.
     _log.info("___", extra={"stream_id": None})
-    # Example: how to combine out rate_limit() with other extra values.
-    _log.info("___", extra={**rate_limit(stream_id=None), "other_field": "other_value"})
+    # Example: how to combine our RateLimit() with other extra values.
+    _log.info("___", extra={**RateLimit(stream_id=None), "other_field": "other_value"})
     time.sleep(1.1)
     _log.info("Line 2")
     _log.info("___")
@@ -89,15 +89,15 @@ def test_log_limit_streams(caplog) -> None:
     _log.addFilter(StreamRateLimitFilter(1))
 
     # All logs containing "___" are expected to be skipped.
-    _log.info("Line 1", extra=rate_limit(stream_id="stream1"))
-    _log.info("Line 2", extra=rate_limit(stream_id="stream2"))
-    _log.info("stream1 ___", extra=rate_limit(stream_id="stream1"))
-    _log.info("stream2 ___", extra=rate_limit(stream_id="stream2"))
+    _log.info("Line 1", extra=RateLimit(stream_id="stream1"))
+    _log.info("Line 2", extra=RateLimit(stream_id="stream2"))
+    _log.info("stream1 ___", extra=RateLimit(stream_id="stream1"))
+    _log.info("stream2 ___", extra=RateLimit(stream_id="stream2"))
     time.sleep(1.1)
-    _log.info("Line 3", extra=rate_limit(stream_id="stream1"))
-    _log.info("stream1 ___", extra=rate_limit(stream_id="stream1"))
-    _log.info("Line 4", extra=rate_limit(stream_id="stream2"))
-    _log.info("stream2 ___", extra=rate_limit(stream_id="stream2"))
+    _log.info("Line 3", extra=RateLimit(stream_id="stream1"))
+    _log.info("stream1 ___", extra=RateLimit(stream_id="stream1"))
+    _log.info("Line 4", extra=RateLimit(stream_id="stream2"))
+    _log.info("stream2 ___", extra=RateLimit(stream_id="stream2"))
     assert "___" not in caplog.text
     assert all([line in caplog.text for line in generate_lines(4)])
 
@@ -112,23 +112,23 @@ def test_log_limit_dynamic_period_sec(caplog):
     _log.addFilter(StreamRateLimitFilter(1))
 
     # All logs containing "___" are expected to be skipped.
-    _log.info("Line 1", extra=rate_limit(stream_id="stream1"))
+    _log.info("Line 1", extra=RateLimit(stream_id="stream1"))
     # Test default limit first.
-    _log.info("___", extra=rate_limit(stream_id="stream1"))
+    _log.info("___", extra=RateLimit(stream_id="stream1"))
     time.sleep(1.1)
-    _log.info("Line 2", extra=rate_limit(stream_id="stream2"))
+    _log.info("Line 2", extra=RateLimit(stream_id="stream2"))
     # Dynamically change period_sec.
-    _log.info("Line 3", extra=rate_limit(stream_id="stream1", period_sec=3))
-    _log.info("___", extra=rate_limit(stream_id="stream1"))
+    _log.info("Line 3", extra=RateLimit(stream_id="stream1", period_sec=3))
+    _log.info("___", extra=RateLimit(stream_id="stream1"))
     time.sleep(1.1)
     # Second stream remains unaffected.
-    _log.info("Line 4", extra=rate_limit(stream_id="stream2"))
-    _log.info("___", extra=rate_limit(stream_id="stream1"))
+    _log.info("Line 4", extra=RateLimit(stream_id="stream2"))
+    _log.info("___", extra=RateLimit(stream_id="stream1"))
     time.sleep(2)  # Already had 1.1 second wait, so this totals 3.1.
-    _log.info("Line 5", extra=rate_limit(stream_id="stream1"))
+    _log.info("Line 5", extra=RateLimit(stream_id="stream1"))
     time.sleep(1.1)
     # Test that change to period_sec only applied in one instance.
-    _log.info("Line 6", extra=rate_limit(stream_id="stream1"))
+    _log.info("Line 6", extra=RateLimit(stream_id="stream1"))
 
     assert "___" not in caplog.text
     assert all([line in caplog.text for line in generate_lines(6)])
@@ -155,11 +155,11 @@ def test_log_limit_summary(caplog):
     _log.info("___")
     time.sleep(1.1)
     # Dynamically override summary so we don't print it.
-    _log.info("Line 3", extra=rate_limit(summary=False))
+    _log.info("Line 3", extra=RateLimit(summary=False))
     _log.info("___")
     time.sleep(1.1)
     # Dynamically override summary message.
-    _log.info("Line 4", extra=rate_limit(summary_msg="Some logs missed"))
+    _log.info("Line 4", extra=RateLimit(summary_msg="Some logs missed"))
 
     assert "___" not in caplog.text
     assert all([line in caplog.text for line in generate_lines(3)])

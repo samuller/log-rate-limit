@@ -70,7 +70,7 @@ class StreamRateLimitFilter(logging.Filter):
         self._summary = summary
         self._summary_msg = summary_msg
         # Next time at which rate-limiting no longer applies to each stream.
-        self._next_valid_time: Dict[StreamID, float] = {}
+        self._next_valid_time: Dict[StreamID, float] = defaultdict(float)
         # Count of the number of logs suppressed/skipped in each stream.
         self._skipped_log_count: Dict[StreamID, int] = defaultdict(int)
         # Count of extra logs left that can ignore rate-limit based on allow_next_n.
@@ -127,13 +127,9 @@ class StreamRateLimitFilter(logging.Filter):
                 self._count_logs_left[stream_id] = allow_next_n
                 self._reset_timer(stream_id, period_sec)
 
-        # Allow if this is the first message for this stream.
-        if stream_id not in self._next_valid_time:
-            prep_to_allow_msg()
-            return True
-
         next_valid_time = self._next_valid_time[stream_id]
-        # Allow if enough time has passed since the last log message for this stream.
+        # Allow if enough time has passed since the last log message for this stream (or if this is the first message
+        # for this stream - in which case next_valid_time should get the default value of 0).
         if time.time() >= next_valid_time:
             prep_to_allow_msg()
             return True

@@ -59,13 +59,13 @@ def test_log_limit_filter_unique(caplog) -> None:
 # We add this patch to every test that uses "extra=RateLimit(...)" so that we can expand meaningfulness of code
 # coverage. See _test_default_overrides() function in log_rate_limit.py for more details.
 @patch("log_rate_limit.log_rate_limit.TEST_MODE", True)
-def test_log_limit_filter_all(caplog) -> None:
+def test_log_limit_filter_undefined(caplog) -> None:
     """Test log limiting applied to all logs."""
     # Setup logging for this test.
     _log = logging.getLogger(get_test_name())
     _log.setLevel(logging.INFO)
     # Setup filter so all logs have a 1-second limit.
-    _log.addFilter(StreamRateLimitFilter(1, filter_all=True))
+    _log.addFilter(StreamRateLimitFilter(1, filter_undefined=True))
 
     # All logs containing "___" are expected to be skipped.
     _log.info("Line 1")
@@ -148,7 +148,7 @@ def test_log_limit_summary(caplog):
     _log.setLevel(logging.INFO)
 
     # Setup to filter all logs with 1-second limit.
-    _log.addFilter(StreamRateLimitFilter(1, filter_all=True, summary=True))
+    _log.addFilter(StreamRateLimitFilter(1, filter_undefined=True, summary=True))
 
     _log.info("Line 1")
     # 3 skipped logs.
@@ -183,7 +183,7 @@ def test_log_limit_allow_next_n(caplog):
     _log.setLevel(logging.INFO)
 
     # Setup to filter all logs with 1-second limit.
-    _log.addFilter(StreamRateLimitFilter(1, filter_all=True, allow_next_n=2))
+    _log.addFilter(StreamRateLimitFilter(1, filter_undefined=True, allow_next_n=2))
 
     _log.info("Line 1")
     _log.info("Line 2")

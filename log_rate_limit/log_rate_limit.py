@@ -18,8 +18,8 @@ class StreamRateLimitFilter(logging.Filter):
         self,
         period_sec: float,
         allow_next_n: int = 0,
-        filter_all: bool = False,
         all_unique: bool = False,
+        filter_undefined: bool = False,
         summary: bool = True,
         summary_msg: str = "+ skipped {numskip} logs due to rate-limiting",
         name: str = "",
@@ -33,10 +33,10 @@ class StreamRateLimitFilter(logging.Filter):
         allow_next_n
             After each allowed log, also allow the immediate next `allow_next_n` count of logs to ignore the rate-limit
             and be allowed. Can also be used to approximate allowing a burst of logs every now and then.
-        filter_all
             If true then even logs without any stream_id (i.e. `None` stream_id) will also be rate limited.
         all_unique
             By default, auto-assign unique stream_id's to all logs by using filename and line_no. This will in-effect
+        filter_undefined
             rate-limit all repeated logs (excluding dynamic changes in the specific log message itself, e.g. through
             formatting args).
         summary
@@ -52,7 +52,7 @@ class StreamRateLimitFilter(logging.Filter):
         # These values are all defaults that can be temporarily overriden on-the-fly.
         self._period_sec = period_sec
         self._allow_next_n = allow_next_n
-        self._filter_all = filter_all
+        self._filter_undefined = filter_undefined
         self._all_unique = all_unique
         self._summary = summary
         self._summary_msg = summary_msg
@@ -92,7 +92,7 @@ class StreamRateLimitFilter(logging.Filter):
         skip_count = self._skipped_log_count[stream_id]
         since_count = self._count_since_reset_log[stream_id]
 
-        if stream_id is None and not self._filter_all:
+        if stream_id is None and not self._filter_undefined:
             return True
 
         # Inner function to prevent code duplication.

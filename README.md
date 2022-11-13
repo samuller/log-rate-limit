@@ -19,7 +19,7 @@ from log_rate_limit import StreamRateLimitFilter
 # Setup logging
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.addFilter(StreamRateLimitFilter(period_sec=1, filter_all=True))
+logger.addFilter(StreamRateLimitFilter(period_sec=1, filter_undefined=True))
 # Log many warnings
 logger.warning("Wolf!")
 logger.warning("Be aware, wolf!")

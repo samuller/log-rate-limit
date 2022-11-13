@@ -180,7 +180,7 @@ def test_log_limit_summary(caplog):
 
     assert "___" not in caplog.text
     assert all([line in caplog.text for line in generate_lines(3)])
-    assert "\n+ skipped 3 logs due to rate-limiting" in caplog.text
+    assert "\n + skipped 3 logs due to rate-limiting" in caplog.text
     assert "skipped 2 logs" not in caplog.text
     assert "Some logs missed" in caplog.text
 

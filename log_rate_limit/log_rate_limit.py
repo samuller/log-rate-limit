@@ -20,7 +20,7 @@ class StreamRateLimitFilter(logging.Filter):
         all_unique: bool = True,
         filter_undefined: bool = False,
         summary: bool = True,
-        summary_msg: str = "+ skipped {numskip} logs due to rate-limiting",
+        summary_msg: str = " + skipped {numskip} logs due to rate-limiting",
         name: str = "",
     ):
         """Construct a logging filter that will limit rate of logs.

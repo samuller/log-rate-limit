@@ -4,7 +4,10 @@ import logging
 from collections import defaultdict
 from typing import Any, Dict, TypedDict, Optional
 
+# Used to enable extra code paths/checks during testing.
 TEST_MODE = False
+
+StreamID = Optional[str]
 
 
 class StreamRateLimitFilter(logging.Filter):
@@ -66,11 +69,12 @@ class StreamRateLimitFilter(logging.Filter):
         self._all_unique = all_unique
         self._summary = summary
         self._summary_msg = summary_msg
-        # All these dictionaries are per-stream with stream_ids as their key.
-        self._next_valid_time: Dict[str, float] = {}
-        self._skipped_log_count: Dict[str, int] = defaultdict(int)
+        # Next time at which rate-limiting no longer applies to each stream.
+        self._next_valid_time: Dict[StreamID, float] = {}
+        # Count of the number of logs suppressed/skipped in each stream.
+        self._skipped_log_count: Dict[StreamID, int] = defaultdict(int)
         # Count of extra logs left that can ignore rate-limit based on allow_next_n.
-        self._count_logs_left: Dict[str, int] = defaultdict(int)
+        self._count_logs_left: Dict[StreamID, int] = defaultdict(int)
 
     def _reset_timer(self, stream_id: str, period_sec: float) -> None:
         self._next_valid_time[stream_id] = time.time() + period_sec
@@ -150,7 +154,7 @@ class RateLimit(TypedDict, total=False):
 
     # Manually define a stream_id for this logging record. A value of `None` is valid and has specific meaning based on
     # the filter's configuration options.
-    stream_id: Optional[str]
+    stream_id: StreamID
     # The following values allow dynamic configurability by overriding the defaults (for only this record) that were
     # set when initializing the filter.
     period_sec: float

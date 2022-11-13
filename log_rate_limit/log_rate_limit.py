@@ -114,7 +114,8 @@ class StreamRateLimitFilter(logging.Filter):
             self._count_logs_left[stream_id] -= 1
             if summary and skip_count > 0:
                 # Change message to indicate a summary of skipped logs.
-                added_msg = summary_msg.format(numskip=skip_count)
+                # NOTE: period_sec might be incorrect if it is, or has been, overridden (either currently or recently).
+                added_msg = summary_msg.format(numskip=skip_count, stream_id=stream_id, period_sec=period_sec)
                 record.msg = f"{record.msg}\n{added_msg}"
             # Reset counters and timers.
             if reset_all:

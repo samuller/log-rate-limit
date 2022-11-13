@@ -17,7 +17,7 @@ class StreamRateLimitFilter(logging.Filter):
         self,
         period_sec: float,
         allow_next_n: int = 0,
-        all_unique: bool = False,
+        all_unique: bool = True,
         filter_undefined: bool = False,
         summary: bool = True,
         summary_msg: str = "+ skipped {numskip} logs due to rate-limiting",

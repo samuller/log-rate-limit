@@ -19,19 +19,21 @@ from log_rate_limit import StreamRateLimitFilter
 # Setup logging
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.addFilter(StreamRateLimitFilter(period_sec=1, filter_undefined=True))
+logger.addFilter(StreamRateLimitFilter(period_sec=1))
 # Log many warnings
-logger.warning("Wolf!")
-logger.warning("Be aware, wolf!")
-logger.warning("Loop there, a wolf!")
-time.sleep(1)
-logger.warning("Ah, no really, a wolf!")
+for _ in range(100):
+    logger.warning("Wolf!")
+for i in range(100):
+    logger.warning("No really, a wolf!")
+    if i == 98:
+        time.sleep(1)
 ``` 
 Which only outputs the following:
 ```
 WARNING:__main__:Wolf!
-WARNING:__main__:Ah, no really, a wolf!
-+ skipped 2 logs due to rate-limiting
+WARNING:__main__:No really, a wolf!
+WARNING:__main__:No really, a wolf!
++ skipped 98 logs due to rate-limiting
 ```
-Note the 2nd and 3rd logs have been supressed, and the final log has an extra summary message added afterwards.
+Note that logs were only repeated after the `sleep()` call, and the repeated log also included an extra summary message added afterwards.
     pip install git+https://github.com/samuller/log-rate-limit

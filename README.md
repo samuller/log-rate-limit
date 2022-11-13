@@ -14,12 +14,12 @@ Basic example:
 ```python
 import time
 import logging
-from log_rate_limit import RateLimitFilter
+from log_rate_limit import StreamRateLimitFilter
 
 # Setup logging
 logging.basicConfig()
 logger = logging.getLogger(__name__)
-logger.addFilter(RateLimitFilter(min_time_sec=1, filter_all=True))
+logger.addFilter(StreamRateLimitFilter(period_sec=1, filter_all=True))
 # Log many warnings
 logger.warning("Wolf!")
 logger.warning("Be aware, wolf!")

@@ -27,7 +27,7 @@ class StreamRateLimitFilter(logging.Filter):
         Parameters
         ----------
         period_sec
-            The minimum time period in seconds allowed between log messages of the same stream.
+            The minimum time period (in seconds) allowed between log messages of the same stream.
         allow_next_n
             After each allowed log, also allow the immediate next `allow_next_n` count of logs to ignore the rate-limit
             and be allowed. Can also be used to approximate allowing a burst of logs every now and then.

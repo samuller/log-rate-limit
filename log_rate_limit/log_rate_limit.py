@@ -1,12 +1,12 @@
-"""Module for the RateLimitFilter class."""
+"""Module for the StreamRateLimitFilter class."""
 import time
 import logging
 from collections import defaultdict
 from typing import Any, Dict, Optional
 
 
-class RateLimitFilter(logging.Filter):
-    """Filter out logs so they don't happen too fast within a given period of time.
+class StreamRateLimitFilter(logging.Filter):
+    """Filter out each "stream" of logs so they don't happen too fast within a given period of time.
 
     Logs can be separated into "streams" so that the rate-limit only applies to logs in the same stream. By default
     all logs will be assigned to the `None` stream and will not have the rate-limit applied to them.

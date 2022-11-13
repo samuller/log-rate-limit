@@ -2,7 +2,7 @@ import time
 import inspect
 import logging
 
-from log_rate_limit import RateLimitFilter, rate_limit
+from log_rate_limit import StreamRateLimitFilter, rate_limit
 
 
 def get_test_name():
@@ -24,7 +24,7 @@ def test_log_limit_all_unaffected(caplog) -> None:
     _log = logging.getLogger(get_test_name())
     _log.setLevel(logging.INFO)
     # Setup filter 1-second limit which should only affect logs with stream_ids.
-    _log.addFilter(RateLimitFilter(1))
+    _log.addFilter(StreamRateLimitFilter(1))
 
     _log.info("Line 1")
     _log.info("Line 2")
@@ -41,7 +41,7 @@ def test_log_limit_filter_unique(caplog) -> None:
     _log = logging.getLogger(get_test_name())
     _log.setLevel(logging.INFO)
     # Setup filter so all logs have a 1-second limit.
-    _log.addFilter(RateLimitFilter(1, all_unique=True))
+    _log.addFilter(StreamRateLimitFilter(1, all_unique=True))
 
     for _ in range(5):
         _log.info("Line 1")
@@ -61,7 +61,7 @@ def test_log_limit_filter_all(caplog) -> None:
     _log = logging.getLogger(get_test_name())
     _log.setLevel(logging.INFO)
     # Setup filter so all logs have a 1-second limit.
-    _log.addFilter(RateLimitFilter(1, filter_all=True))
+    _log.addFilter(StreamRateLimitFilter(1, filter_all=True))
 
     # All logs containing "___" are expected to be skipped.
     _log.info("Line 1")
@@ -86,7 +86,7 @@ def test_log_limit_streams(caplog) -> None:
     _log.setLevel(logging.INFO)
 
     # Setup filter so logs with stream-ids have a 1-second limit.
-    _log.addFilter(RateLimitFilter(1))
+    _log.addFilter(StreamRateLimitFilter(1))
 
     # All logs containing "___" are expected to be skipped.
     _log.info("Line 1", extra=rate_limit(stream_id="stream1"))
@@ -109,7 +109,7 @@ def test_log_limit_dynamic_period_sec(caplog):
     _log.setLevel(logging.INFO)
 
     # Setup filter so logs with stream-ids have a 1-second limit.
-    _log.addFilter(RateLimitFilter(1))
+    _log.addFilter(StreamRateLimitFilter(1))
 
     # All logs containing "___" are expected to be skipped.
     _log.info("Line 1", extra=rate_limit(stream_id="stream1"))
@@ -141,7 +141,7 @@ def test_log_limit_summary(caplog):
     _log.setLevel(logging.INFO)
 
     # Setup to filter all logs with 1-second limit.
-    _log.addFilter(RateLimitFilter(1, filter_all=True, summary=True))
+    _log.addFilter(StreamRateLimitFilter(1, filter_all=True, summary=True))
 
     _log.info("Line 1")
     # 3 skipped logs.
@@ -175,7 +175,7 @@ def test_log_limit_allow_next_n(caplog):
     _log.setLevel(logging.INFO)
 
     # Setup to filter all logs with 1-second limit.
-    _log.addFilter(RateLimitFilter(1, filter_all=True, allow_next_n=2))
+    _log.addFilter(StreamRateLimitFilter(1, filter_all=True, allow_next_n=2))
 
     _log.info("Line 1")
     _log.info("Line 2")

@@ -17,6 +17,7 @@ class RateLimitFilter(logging.Filter):
         min_time_sec: float,
         allow_next_n: int = 0,
         filter_all: bool = False,
+        all_unique: bool = False,
         summary: bool = True,
         summary_msg: str = "+ skipped {numskip} logs due to rate-limiting",
         name: str = "",
@@ -32,6 +33,10 @@ class RateLimitFilter(logging.Filter):
             and be allowed. Can also be used to approximate allowing a burst of logs every now and then.
         filter_all
             If true then even logs without any stream_id (i.e. `None` stream_id) will also be rate limited.
+        all_unique
+            By default, auto-assign unique stream_id's to all logs by using filename and line_no. This will in-effect
+            rate-limit all repeated logs (excluding dynamic changes in the specific log message itself, e.g. through
+            formatting args).
         summary
             If a summary message should be shown along with allowed logs to summarise logs that were suppressed/skipped.
         summary_msg
@@ -46,6 +51,7 @@ class RateLimitFilter(logging.Filter):
         self._min_time_sec = min_time_sec
         self._allow_next_n = allow_next_n
         self._filter_all = filter_all
+        self._all_unique = all_unique
         self._summary = summary
         self._summary_msg = summary_msg
         # All these dictionaries are per-stream with stream_ids as their key.
@@ -70,7 +76,9 @@ class RateLimitFilter(logging.Filter):
         True if log should be shown or else False if log should be skipped/hidden/filtered out.
         """
         # Get variables that can be dynamically overridden, or else will use init-defaults.
-        stream_id = self._get(record, "stream_id")
+        stream_id = self._get(record, "stream_id", None)
+        if self._all_unique and stream_id is None:
+            stream_id = f"{record.filename}:{record.lineno}"
         min_time_sec = self._get(record, "min_time_sec", self._min_time_sec)
         allow_next_n = self._get(record, "allow_next_n", self._allow_next_n)
         summary = self._get(record, "summary", self._summary)
@@ -78,7 +86,7 @@ class RateLimitFilter(logging.Filter):
         skip_count = self._skipped_log_count[stream_id]
         since_count = self._count_since_reset_log[stream_id]
 
-        if not self._filter_all and stream_id is None:
+        if stream_id is None and not self._filter_all:
             return True
 
         # Inner function to prevent code duplication.

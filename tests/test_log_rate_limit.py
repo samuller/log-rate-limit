@@ -35,6 +35,26 @@ def test_log_limit_all_unaffected(caplog) -> None:
     assert all([line in caplog.text for line in generate_lines(3)])
 
 
+def test_log_limit_filter_unique(caplog) -> None:
+    """Test log limiting applied separately to each unique log."""
+    # Setup logging for this test.
+    _log = logging.getLogger(get_test_name())
+    _log.setLevel(logging.INFO)
+    # Setup filter so all logs have a 1-second limit.
+    _log.addFilter(RateLimitFilter(1, all_unique=True))
+
+    for _ in range(5):
+        _log.info("Line 1")
+    for _ in range(5):
+        _log.info("Line 2")
+    for _ in range(5):
+        _log.info("Line 3")
+    assert all([line in caplog.text for line in generate_lines(3)])
+    log_lines = caplog.text.splitlines()
+    # Confirm there are no duplicated log lines at all.
+    assert len(log_lines) == len(set(log_lines))
+
+
 def test_log_limit_filter_all(caplog) -> None:
     """Test log limiting applied to all logs."""
     # Setup logging for this test.

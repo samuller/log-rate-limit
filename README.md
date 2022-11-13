@@ -21,10 +21,10 @@ Example of rate-limiting with default options where each log is assigned to it's
 import time
 import logging
 from log_rate_limit import StreamRateLimitFilter, RateLimit
-
 # Setup logging
 logging.basicConfig()
 logger = logging.getLogger(__name__)
+
 # Add our filter
 logger.addFilter(StreamRateLimitFilter(period_sec=1))
 # Log many warnings
@@ -50,7 +50,7 @@ WARNING:__main__:Sheep!
 ```
 Note that (unless overridden) logs were only repeated after the `sleep()` call, and the repeated log also included an extra summary message added afterwards.
 
-When we override rate-limiting above, you'll see our filter reads dynamic configs from logging's "extra" parameter.
+When we override rate-limiting above, you'll see our filter reads dynamic configs from logging's `extra` parameter.
 
 > Be very careful not to forget the `extra=` name part of the argument, as then the logging framework will assume you're passing arguments meant for formatting in the logging message and your options will silently be ignored!
 
@@ -60,12 +60,13 @@ If you want most of your logs to be unaffected and you only have some you want t
 ```python
 import logging
 from log_rate_limit import StreamRateLimitFilter, RateLimit
-
+# Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-# Don't consider all logs unique by default
+
+# Add our filter, but don't assign unique streams to logs by default
 logger.addFilter(StreamRateLimitFilter(period_sec=1, all_unique=False))
-# Normal logs are not rate-limited
+# Normal logs are now not rate-limited
 for i in range(3):
     logger.info(f"Status: {i}")
 # Only those we manually assign a stream will be rate-limited

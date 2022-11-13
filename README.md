@@ -68,15 +68,15 @@ logger = logging.getLogger(__name__)
 logger.addFilter(StreamRateLimitFilter(period_sec=1, all_unique=False))
 # Normal logs are now not rate-limited
 for i in range(3):
-    logger.info(f"Status: {i}")
+    logger.info(f"Status update: {i}")
 # Only those we manually assign a stream will be rate-limited
 for _ in range(3):
     logger.warning("Issue!", extra=RateLimit(stream_id="issue"))
 ```
 Which only outputs the following:
 ```log
-INFO:__main__:Status: 0
-INFO:__main__:Status: 1
-INFO:__main__:Status: 2
+INFO:__main__:Status update: 0
+INFO:__main__:Status update: 1
+INFO:__main__:Status update: 2
 WARNING:__main__:Issue!
 ```

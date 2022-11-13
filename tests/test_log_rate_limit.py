@@ -82,7 +82,7 @@ def test_log_limit_filter_undefined(caplog) -> None:
     _log.info("___")
     # Example: all logs default to stream_id=None.
     _log.info("___", extra=RateLimit(stream_id=None))
-    # Example: RateLimit() is just a short-hand for creating an dict for the "extra" parameter.
+    # Example: RateLimit() is just a short-hand for creating a dict for the "extra" parameter.
     _log.info("___", extra={"stream_id": None})
     # Example: how to combine our RateLimit() with other extra values.
     _log.info("___", extra={**RateLimit(stream_id=None), "other_field": "other_value"})

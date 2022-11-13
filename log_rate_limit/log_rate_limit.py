@@ -4,6 +4,8 @@ import logging
 from collections import defaultdict
 from typing import Any, Dict, TypedDict, Optional
 
+TEST_MODE = False
+
 
 class StreamRateLimitFilter(logging.Filter):
     """Filter out each "stream" of logs so they don't happen too fast within a given period of time.
@@ -75,6 +77,9 @@ class StreamRateLimitFilter(logging.Filter):
         -------
         True if log should be shown or else False if log should be skipped/hidden/filtered out.
         """
+        global TEST_MODE
+        if TEST_MODE:
+            _test_default_overrides(record)
         # Get variables that can be dynamically overridden, or else will use init-defaults.
         stream_id = self._get(record, "stream_id", None)
         if self._all_unique and stream_id is None:
@@ -135,3 +140,25 @@ class RateLimit(TypedDict, total=False):
     allow_next_n: int
     summary: bool
     summary_msg: str
+
+
+def _test_default_overrides(record: logging.LogRecord) -> None:
+    """(Only used during testing) Checks default-override parameter values to improve value of code coverage.
+
+    A 100% statement coverage of our code isn't always sufficient as it can miss specific variable states (also because
+    the branching caused by those states happens in Python library code which is excluded from our code coverage). In
+    our case, it's specifically easy to miss if there aren't tests for each variable that can override the default
+    values. We therefore add statements/lines of code here for variables states we're interested in also covering.
+    """
+    do_something = None
+    if hasattr(record, "stream_id"):
+        do_something = None
+    if hasattr(record, "period_sec"):
+        do_something = None
+    if hasattr(record, "allow_next_n"):
+        do_something = None
+    if hasattr(record, "summary"):
+        do_something = None
+    if hasattr(record, "summary_msg"):
+        do_something = None
+    return do_something

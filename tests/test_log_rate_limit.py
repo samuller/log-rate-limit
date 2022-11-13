@@ -1,6 +1,7 @@
 import time
 import inspect
 import logging
+from unittest.mock import patch
 
 from log_rate_limit import StreamRateLimitFilter, RateLimit
 
@@ -55,6 +56,9 @@ def test_log_limit_filter_unique(caplog) -> None:
     assert len(log_lines) == len(set(log_lines))
 
 
+# We add this patch to every test that uses "extra=RateLimit(...)" so that we can expand meaningfulness of code
+# coverage. See _test_default_overrides() function in log_rate_limit.py for more details.
+@patch("log_rate_limit.log_rate_limit.TEST_MODE", True)
 def test_log_limit_filter_all(caplog) -> None:
     """Test log limiting applied to all logs."""
     # Setup logging for this test.
@@ -79,6 +83,7 @@ def test_log_limit_filter_all(caplog) -> None:
     assert all([line in caplog.text for line in generate_lines(2)])
 
 
+@patch("log_rate_limit.log_rate_limit.TEST_MODE", True)
 def test_log_limit_streams(caplog) -> None:
     """Test that log limiting applies separately to different streams."""
     # Setup logging.
@@ -102,6 +107,7 @@ def test_log_limit_streams(caplog) -> None:
     assert all([line in caplog.text for line in generate_lines(4)])
 
 
+@patch("log_rate_limit.log_rate_limit.TEST_MODE", True)
 def test_log_limit_dynamic_period_sec(caplog):
     """Test that the period_sec value can be dynamically changed per-stream."""
     # Setup logging.
@@ -134,6 +140,7 @@ def test_log_limit_dynamic_period_sec(caplog):
     assert all([line in caplog.text for line in generate_lines(6)])
 
 
+@patch("log_rate_limit.log_rate_limit.TEST_MODE", True)
 def test_log_limit_summary(caplog):
     """Test the summary functionality."""
     # Setup logging.
@@ -168,6 +175,7 @@ def test_log_limit_summary(caplog):
     assert "Some logs missed" in caplog.text
 
 
+@patch("log_rate_limit.log_rate_limit.TEST_MODE", True)
 def test_log_limit_allow_next_n(caplog):
     """Test the summary functionality."""
     # Setup logging.

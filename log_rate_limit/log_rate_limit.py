@@ -88,6 +88,7 @@ class StreamRateLimitFilter(logging.Filter):
         allow_next_n = self._get(record, "allow_next_n", self._allow_next_n)
         summary = self._get(record, "summary", self._summary)
         summary_msg = self._get(record, "summary_msg", self._summary_msg)
+
         skip_count = self._skipped_log_count[stream_id]
         since_count = self._count_since_reset_log[stream_id]
 

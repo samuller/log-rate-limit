@@ -8,8 +8,8 @@
 
 A [logging filter](https://docs.python.org/3/library/logging.html#filter-objects) using Python's standard logging mechanisms to rate-limit logs - i.e. suppress logs when they are being output too fast.
 
-Log commands are grouped into separate **streams** that will each have their own rate limitation applied without affecting the logs in other streams. By default every log is assigned a unique stream so that only "repeated" logs will be suppressed - in this case "repeated" logs doesn't mean identical log messages, but rather logs output from the same line of code. However, logs can also be assigned streams manually to achieve various outcomes:
-- A dynamic stream id based on the message content can be used so that different messages from the same log command can also be rate-limited separately.
+Log commands are grouped into separate **streams** that will each have their own rate limitation applied without affecting the logs in other streams. By default every log is assigned a unique stream so that only "repeated" logs will be suppressed (in this case "repeated" logs doesn't mean identical log messages, but rather logs output from the same line of code). However, logs can also be assigned streams manually to achieve various outcomes:
+- A dynamic stream ID based on the message content can be used so that different messages from the same log command can also be rate-limited separately.
 - A log can be assigned to an undefined/`None` stream so that rate-limiting doesn't apply to it.
 - Logs in different parts of the code can be grouped into the same stream so that they share a rate-limit, e.g. when they all trigger due to the same issue and only some are needed to indicate it.
 
@@ -120,7 +120,15 @@ WARNING:__main__:Wolf!
 ```
 Since both log calls are in the same stream.
 
-Alternatively, custom options can also be added by writing your own own [logging.Filter](https://docs.python.org/3.8/howto/logging-cookbook.html#using-filters-to-impart-contextual-information).
+Alternatively (to a LoggerAdapter), custom options can also be added by writing your own [logging.Filter](https://docs.python.org/3.8/howto/logging-cookbook.html#using-filters-to-impart-contextual-information).
+
+### Dynamic stream ID
+
+To ensure that the same log line doesn't rate limit with itself when it's messages actually have different content, a dynamic string value can be assigned based on the message content. For example:
+
+```python
+logger.warning(f"Error occured on device {device_id}!", extra=RateLimit(stream_id=f"error_on_{device_id}"))
+```
 
 ## Installation
 

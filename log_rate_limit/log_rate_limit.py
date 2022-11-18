@@ -13,7 +13,9 @@ StreamID = Optional[str]
 class StreamRateLimitFilter(logging.Filter):
     """Filter out each "stream" of logs so they don't happen too fast within a given period of time.
 
-    Logs can be separated into "streams" so that the rate-limit only applies to logs in the same stream.
+    Logs can be separated into "streams" so that the rate-limit only applies to logs in the same stream. Also, the
+    trigger times for each stream can be accessed and controlled (read or written) in case there are other non-logging
+    events that you want to rate-limit in a similar fasion (or possibly even in the same stream as some other logs).
     """
 
     def __init__(
@@ -69,20 +71,60 @@ class StreamRateLimitFilter(logging.Filter):
         self._all_unique = all_unique
         self._summary = summary
         self._summary_msg = summary_msg
-        # Next time at which rate-limiting no longer applies to each stream.
+        # Next time at which rate-limiting no longer applies to each stream. Initial default of 0 will always fire
+        # since it specifies the Unix epoch timestamp.
         self._next_valid_time: Dict[StreamID, float] = defaultdict(float)
         # Count of the number of logs suppressed/skipped in each stream.
         self._skipped_log_count: Dict[StreamID, int] = defaultdict(int)
         # Count of extra logs left that can ignore rate-limit based on allow_next_n.
         self._count_logs_left: Dict[StreamID, int] = defaultdict(int)
 
-    def _reset_timer(self, stream_id: str, period_sec: float) -> None:
-        self._next_valid_time[stream_id] = time.time() + period_sec
-
     def _get(self, record: logging.LogRecord, attribute: str, default_val: Any = None) -> Any:
         if hasattr(record, attribute):
             return getattr(record, attribute)
         return default_val
+
+    def should_trigger(self, stream_id: str, current_time: Optional[float] = None) -> bool:
+        """Whether a stream can trigger as enough time has passed since a stream previously triggered.
+
+        Parameters
+        ----------
+        stream_id
+            Unique stream identifier.
+        current_time
+            Optional parameter that can be used to call this function for different points in time.
+
+        Return
+        ------
+        True if enough time has passed that this stream is able to trigger.
+        """
+        if current_time is None:
+            current_time = time.time()
+        # Allow if enough time has passed since the last log message for this stream (or if this is the first message
+        # for this stream - in which case next_valid_time should get the default value of 0).
+        next_valid_time = self._next_valid_time[stream_id]
+        return current_time >= next_valid_time
+
+    def reset_trigger(
+        self, stream_id: str, override_period_sec: Optional[float] = None, current_time: Optional[float] = None
+    ) -> None:
+        """Reset a stream's trigger timer - should happen whenever it triggers.
+
+        Parameters
+        ----------
+        stream_id
+            Unique stream identifier.
+        override_period_sec
+            Optional parameter to override the minimum time period between triggers (period_sec) instead of using the
+            default value defined when this class was instantiated.
+        current_time
+            Optional parameter that can be used to call this function for different points in time.
+        """
+        if override_period_sec is None:
+            override_period_sec = self._period_sec
+        if current_time is None:
+            current_time = time.time()
+        self._next_valid_time[stream_id] = current_time + override_period_sec
 
     def filter(self, record: logging.LogRecord) -> bool:
         """Filter function that determines if given log message will be displayed.
@@ -125,12 +167,10 @@ class StreamRateLimitFilter(logging.Filter):
             if reset_all:
                 self._skipped_log_count[stream_id] = 0
                 self._count_logs_left[stream_id] = allow_next_n
-                self._reset_timer(stream_id, period_sec)
+                self.reset_trigger(stream_id, period_sec)
 
-        next_valid_time = self._next_valid_time[stream_id]
-        # Allow if enough time has passed since the last log message for this stream (or if this is the first message
-        # for this stream - in which case next_valid_time should get the default value of 0).
-        if time.time() >= next_valid_time:
+        # Allow if enough time has passed since the last log message for this stream waas triggered.
+        if self.should_trigger(stream_id):
             prep_to_allow_msg()
             return True
 

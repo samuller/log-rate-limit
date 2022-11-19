@@ -84,6 +84,30 @@ class StreamRateLimitFilter(logging.Filter):
             return getattr(record, attribute)
         return default_val
 
+    def trigger(
+        self, stream_id: str, override_period_sec: Optional[float] = None, current_time: Optional[float] = None
+    ) -> bool:
+        """Trigger a specific stream and then also resets its rate-limit timer - but only if rate-limiting allows.
+
+        Parameters
+        ----------
+        stream_id
+            Unique stream identifier.
+        override_period_sec
+            Optional parameter to override the minimum time period between triggers (period_sec) instead of using the
+            default value defined when this class was instantiated.
+        current_time
+            Optional parameter that can be used to call this function for different points in time.
+
+        Return
+        ------
+        True if the trigger was allowed to fire (enough time has passed) and has been reset.
+        """
+        if self.should_trigger(stream_id, current_time):
+            self.reset_trigger(stream_id, override_period_sec, current_time)
+            return True
+        return False
+
     def should_trigger(self, stream_id: StreamID, current_time: Optional[float] = None) -> bool:
         """Whether a stream can trigger as enough time has passed since a stream previously triggered.
 

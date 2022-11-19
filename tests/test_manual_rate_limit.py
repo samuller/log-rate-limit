@@ -18,5 +18,10 @@ def test_manual_limit_streams(caplog) -> None:
     # After triggering/resetting events can only trigger if enough time has passed.
     assert not limiter.should_trigger("stream1", current_time=start)
     assert limiter.should_trigger("stream1", current_time=start + 1.1)
+    # Run triggers twice to confirm whether they reset the timer.
+    assert not limiter.trigger("stream1", current_time=start)
+    assert not limiter.trigger("stream1", current_time=start)
+    assert limiter.trigger("stream1", current_time=start + 1.1)
+    assert not limiter.trigger("stream1", current_time=start + 1.1)
     # Second stream should be unaffected about trigger events in stream1.
     assert limiter.should_trigger("stream2", current_time=start)

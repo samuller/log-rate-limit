@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "log-rate-limit"
-version = "1.0.1"
+version = "1.1.0"
 description = "Limit excessive log output with Python's standard logging framework."
 authors = ["Simon Muller <samullers@gmail.com>"]
 readme = "README.md"

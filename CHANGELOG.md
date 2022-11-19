@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.1.0] - 2022-11-19
+
 ### Added
 
 - Add methods `trigger()`, `should_trigger()` and `reset_trigger()` that are used to evaluate rate-limiting and trigger logs. These functions can also be used separately from logging for other purposes, e.g. to trigger custom rate-limited events.

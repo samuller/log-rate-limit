@@ -124,7 +124,7 @@ Alternatively (to a LoggerAdapter), custom options can also be added by writing 
 
 ### Dynamic stream ID
 
-To ensure that the same log line doesn't rate limit with itself when it's messages actually have different content, a dynamic string value can be assigned based on the message content. For example:
+To ensure that the same log line doesn't rate limit with itself when it's messages actually have different content, a dynamic stream ID can be assigned based on the message content. For example:
 
 ```python
 logger.warning(f"Error occured on device {device_id}!", extra=RateLimit(stream_id=f"error_on_{device_id}"))

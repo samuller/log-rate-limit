@@ -1,6 +1,6 @@
 # log-rate-limit - limit excessive log output
 
-[![PyPI Version](https://badge.fury.io/py/log-rate-limit.svg)](https://badge.fury.io/py/log-rate-limit)
+[![PyPI Version](https://img.shields.io/pypi/v/log-rate-limit)](https://pypi.org/project/log-rate-limit/)
 [![Build Status](https://github.com/samuller/log-rate-limit/actions/workflows/tests.yml/badge.svg)](https://github.com/samuller/log-rate-limit/actions/workflows/tests.yml)
 [![Code Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/samuller/pgmerge/actions)
 [![Checked with mypy](https://img.shields.io/badge/mypy-strict-blue)](http://mypy-lang.org/)

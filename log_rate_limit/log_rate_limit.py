@@ -1,6 +1,7 @@
 """Module for the StreamRateLimitFilter class."""
 import time
 import logging
+from enum import Enum
 from collections import defaultdict
 from typing import Any, Dict, TypedDict, Optional
 
@@ -8,6 +9,17 @@ from typing import Any, Dict, TypedDict, Optional
 TEST_MODE = False
 
 StreamID = Optional[str]
+
+
+class DefaultStreamID(Enum):
+    """Define how the default stream ID is determined."""
+
+    # Default stream ID to None.
+    NONE = 0
+    # Default stream ID to the log's file and line number location.
+    FILE_LINE_NO = 1
+    # Default stream ID to the log message.
+    LOG_MESSAGE = 2
 
 
 class StreamRateLimitFilter(logging.Filter):
@@ -22,7 +34,7 @@ class StreamRateLimitFilter(logging.Filter):
         self,
         period_sec: float,
         allow_next_n: int = 0,
-        all_unique: bool = True,
+        default_stream_id: DefaultStreamID = DefaultStreamID.FILE_LINE_NO,
         filter_undefined: bool = False,
         summary: bool = True,
         summary_msg: str = " + skipped {numskip} logs due to rate-limiting",
@@ -38,19 +50,17 @@ class StreamRateLimitFilter(logging.Filter):
             After each allowed log, also allow the immediate next `allow_next_n` count of logs (within the same stream)
             to ignore the rate-limit and be allowed. Can also be used to approximate allowing a burst of logs every now
             and then.
-        all_unique
-            If all logs should have unique `stream_id`s assigned to them by default. The default `stream_id` of a log
-            is thus determined as follows:
-            - If `all_unique=True` then a unique `stream_id` will be auto-assigned to all logs (by using `filename` and
-              `line_no`). This will in-effect rate-limit all repeated logs (excluding dynamic changes in the specific
-              log message itself, e.g. through formatting args).
-            - If `all_unique=False` then all logs will be default assigned `stream_id=None` and other `stream_id`
-              values will need to be manually specified on a case-by-case basis.
+        default_stream_id
+            Define how the default value for each log's `stream_id` is determined when it isn't manually specified:
+            - `NONE`: Stream ID's default to `None` which might mean they won't be rate-limited or that they will all
+                      share the same rate-limit (depending on `filter_undefined`).
+            - `FILE_LINE_NO`: Each log is given a Stream ID based on the file and line number where it's located.
+            - `LOG_MESSAGE`: The exact log message (after formatting) is used as a unique stream ID. This means that
+               all unique messages will be rate-limited.
         filter_undefined
             If logs without defined `stream_id`s should be filtered:
             - If `filter_undefined=True` then even logs without any stream_id (i.e. `stream_id=None`) will also be
-              rate-limited. (Note that if `all_unique=True` then logs will only have `stream_id=None` when manually
-              specified.)
+              rate-limited.
             - If `filter_undefined=False`, then all logs with `stream_id=None` will not have any rate-limit applied to
               them.
         summary
@@ -68,7 +78,7 @@ class StreamRateLimitFilter(logging.Filter):
         self._period_sec = period_sec
         self._allow_next_n = allow_next_n
         self._filter_undefined = filter_undefined
-        self._all_unique = all_unique
+        self._default_stream_id = default_stream_id
         self._summary = summary
         self._summary_msg = summary_msg
         # Next time at which rate-limiting no longer applies to each stream. Initial default of 0 will always fire
@@ -165,9 +175,11 @@ class StreamRateLimitFilter(logging.Filter):
             _test_default_overrides(record)
 
         default_stream_id = None
-        if self._all_unique:
+        if self._default_stream_id == DefaultStreamID.FILE_LINE_NO:
             # Assign unique default stream_ids.
             default_stream_id = f"{record.filename}:{record.lineno}"
+        if self._default_stream_id == DefaultStreamID.LOG_MESSAGE:
+            default_stream_id = f"{record.filename}:{record.lineno}[{record.args.__repr__()}]"
         # Get variables that can be dynamically overridden, or else use init-defaults.
         stream_id = self._get(record, "stream_id", default_stream_id)
         period_sec = self._get(record, "period_sec", self._period_sec)

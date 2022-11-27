@@ -1,11 +1,11 @@
 """Example code used in the docs."""
 import logging
-from log_rate_limit import StreamRateLimitFilter, RateLimit
+from log_rate_limit import StreamRateLimitFilter, RateLimit, DefaultStreamID
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 # Don't consider all logs unique by default
-logger.addFilter(StreamRateLimitFilter(period_sec=1, all_unique=False))
+logger.addFilter(StreamRateLimitFilter(period_sec=1, default_stream_id=DefaultStreamID.NONE))
 # Normal logs are not rate-limited
 for i in range(3):
     logger.info(f"Status update: {i}")

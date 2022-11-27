@@ -2,7 +2,7 @@ import time
 import logging
 from unittest.mock import patch
 
-from log_rate_limit import StreamRateLimitFilter, RateLimit
+from log_rate_limit import StreamRateLimitFilter, RateLimit, DefaultStreamID
 
 from utils import get_test_name, generate_lines
 
@@ -40,7 +40,7 @@ def test_log_limit_filter_unique(caplog) -> None:
     _log = logging.getLogger(get_test_name())
     _log.setLevel(logging.INFO)
     # Setup filter so all logs have a 1-second limit.
-    _log.addFilter(StreamRateLimitFilter(1, all_unique=True))
+    _log.addFilter(StreamRateLimitFilter(1, default_stream_id=DefaultStreamID.FILE_LINE_NO))
 
     for _ in range(5):
         _log.info("Line 1")
@@ -63,7 +63,7 @@ def test_log_limit_filter_undefined(caplog) -> None:
     _log = logging.getLogger(get_test_name())
     _log.setLevel(logging.INFO)
     # Setup to filter all logs in the same stream without needing to define a stream_id each time.
-    _log.addFilter(StreamRateLimitFilter(1, all_unique=False, filter_undefined=True))
+    _log.addFilter(StreamRateLimitFilter(1, default_stream_id=DefaultStreamID.NONE, filter_undefined=True))
 
     # All logs containing "___" are expected to be skipped.
     _log.info("Line 1")
@@ -89,7 +89,7 @@ def test_log_limit_streams(caplog) -> None:
     _log.setLevel(logging.INFO)
 
     # Setup filter so logs with stream-ids have a 1-second limit.
-    _log.addFilter(StreamRateLimitFilter(1, all_unique=False))
+    _log.addFilter(StreamRateLimitFilter(1, default_stream_id=DefaultStreamID.NONE))
 
     # All logs containing "___" are expected to be skipped.
     _log.info("Line 1", extra=RateLimit(stream_id="stream1"))
@@ -113,7 +113,7 @@ def test_log_limit_dynamic_period_sec(caplog):
     _log.setLevel(logging.INFO)
 
     # Setup filter so logs with stream-ids have a 1-second limit.
-    _log.addFilter(StreamRateLimitFilter(1, all_unique=False))
+    _log.addFilter(StreamRateLimitFilter(1, default_stream_id=DefaultStreamID.NONE))
 
     # All logs containing "___" are expected to be skipped.
     _log.info("Line 1", extra=RateLimit(stream_id="stream1"))
@@ -146,7 +146,9 @@ def test_log_limit_summary(caplog):
     _log.setLevel(logging.INFO)
 
     # Setup to filter all logs in the same stream without needing to define a stream_id each time.
-    _log.addFilter(StreamRateLimitFilter(1, all_unique=False, filter_undefined=True, summary=True))
+    _log.addFilter(
+        StreamRateLimitFilter(1, default_stream_id=DefaultStreamID.NONE, filter_undefined=True, summary=True)
+    )
 
     _log.info("Line 1")
     # 3 skipped logs.
@@ -181,7 +183,9 @@ def test_log_limit_allow_next_n(caplog):
     _log.setLevel(logging.INFO)
 
     # Setup to filter all logs in the same stream without needing to define a stream_id each time.
-    _log.addFilter(StreamRateLimitFilter(1, all_unique=False, filter_undefined=True, allow_next_n=2))
+    _log.addFilter(
+        StreamRateLimitFilter(1, default_stream_id=DefaultStreamID.NONE, filter_undefined=True, allow_next_n=2)
+    )
 
     _log.info("Line 1")
     _log.info("Line 2")

@@ -16,7 +16,7 @@ DefaultStreamID = Literal[None, "file_line_no", "log_message"]
 # We don't use an Enum because we want to support direct string values and enums with string values are only properly
 # supported in Python 3.11+.
 class DefaultSID:
-    """Constants to choose how the default stream ID is determined."""
+    """Default Stream ID constants to choose how an undefined stream ID is determined."""
 
     # Default stream ID to None.
     NONE: DefaultStreamID = None
@@ -183,7 +183,8 @@ class StreamRateLimitFilter(logging.Filter):
             # Assign unique default stream_ids.
             default_stream_id = f"{record.filename}:{record.lineno}"
         if self._default_stream_id == DefaultSID.LOG_MESSAGE:
-            default_stream_id = f"{record.filename}:{record.lineno}[{record.args.__repr__()}]"
+            # Get raw log message and apply any formatting arguments.
+            default_stream_id = f"{record.msg % record.args}]"
         # Get variables that can be dynamically overridden, or else use init-defaults.
         stream_id = self._get(record, "stream_id", default_stream_id)
         period_sec = self._get(record, "period_sec", self._period_sec)

@@ -27,6 +27,7 @@ def test_log_limit_default_unaffected(caplog) -> None:
         # Changing message to avoid duplicate check from failing (and we know, from the implementation, that the
         # message itself has no affect on filtering).
         _log.info(f"Line {6+i}", extra=RateLimit(stream_id=None))
+
     assert "___" not in caplog.text
     assert all([line in caplog.text for line in generate_lines(7)])
     # Confirm there are no duplicated log lines at all.
@@ -34,8 +35,8 @@ def test_log_limit_default_unaffected(caplog) -> None:
     assert len(log_lines) == len(set(log_lines))
 
 
-def test_log_limit_filter_unique(caplog) -> None:
-    """Test log limiting applied separately to each unique log."""
+def test_log_limit_filter_line_no(caplog) -> None:
+    """Test log limiting applied separately to each unique log on a different line."""
     # Setup logging for this test.
     _log = logging.getLogger(get_test_name())
     _log.setLevel(logging.INFO)
@@ -48,8 +49,49 @@ def test_log_limit_filter_unique(caplog) -> None:
         _log.info("Line 2")
     for _ in range(5):
         _log.info("Line 3")
+
     assert all([line in caplog.text for line in generate_lines(3)])
     log_lines = caplog.text.splitlines()
+    # Confirm there are no duplicated log lines at all.
+    assert len(log_lines) == len(set(log_lines))
+
+
+def test_log_limit_filter_log_message(capsys) -> None:
+    """Test log limiting applied separately to each unique log message (but ignoring timestamps, etc.)."""
+    # Setup logging for this test.
+    _log = logging.getLogger(get_test_name())
+    # logging.Formatter
+    _log.setLevel(logging.INFO)
+    formatter = logging.Formatter("[%(asctime)s %(levelname)s %(filename)s.%(name)s:%(lineno)s] %(message)s")
+    # StreamHandler defaults output to stderr.
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    # Add filter specifically to formatted handler so we can confirm continuously changing timestamps have no effect
+    # on rate-limiting.
+    console_handler.addFilter(StreamRateLimitFilter(1, default_stream_id=DefaultSID.LOG_MESSAGE))
+    _log.addHandler(console_handler)
+
+    for _ in range(5):
+        _log.info("Line %d", 1)
+        _log.info("Line 1")
+    for _ in range(5):
+        _log.info("Line 2")
+    for i in range(3):
+        # Check that changed messages are not rate-limited.
+        _log.info(f"Line {3 + i}")
+
+    # Fetch console_handler's output to stderr.
+    log_full = capsys.readouterr().err
+    # We print the same output again since fetching it actually wipes the buffer and we still want it to appear
+    # whenever pytest would usually show it (when tests fail or the "-rP" argument is added). However, this will put
+    # it on stdout instead of stderr.
+    print(log_full)
+
+    assert all([line in log_full for line in generate_lines(5)])
+    log_lines = log_full.splitlines()
+    # Ignore everything before the closing bracket so we only look at the actual message (as the rate-limiting
+    # should have done).
+    log_lines = [" ".join(line.split("]")[1:]) for line in log_lines]
     # Confirm there are no duplicated log lines at all.
     assert len(log_lines) == len(set(log_lines))
 
@@ -77,6 +119,7 @@ def test_log_limit_filter_undefined(caplog) -> None:
     time.sleep(1.1)
     _log.info("Line 2")
     _log.info("___")
+
     assert "___" not in caplog.text
     assert all([line in caplog.text for line in generate_lines(2)])
 
@@ -101,6 +144,7 @@ def test_log_limit_streams(caplog) -> None:
     _log.info("stream1 ___", extra=RateLimit(stream_id="stream1"))
     _log.info("Line 4", extra=RateLimit(stream_id="stream2"))
     _log.info("stream2 ___", extra=RateLimit(stream_id="stream2"))
+
     assert "___" not in caplog.text
     assert all([line in caplog.text for line in generate_lines(4)])
 
@@ -193,5 +237,6 @@ def test_log_limit_allow_next_n(caplog):
     _log.info("Line 4", extra=RateLimit(allow_next_n=1))
     _log.info("Line 5")
     _log.info("___")
+
     assert "___" not in caplog.text
     assert all([line in caplog.text for line in generate_lines(5)])

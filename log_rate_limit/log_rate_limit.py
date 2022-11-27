@@ -1,25 +1,29 @@
 """Module for the StreamRateLimitFilter class."""
 import time
 import logging
-from enum import Enum
 from collections import defaultdict
-from typing import Any, Dict, TypedDict, Optional
+from typing import Any, Dict, TypedDict, Optional, Literal
 
 # Used to enable extra code paths/checks during testing.
 TEST_MODE = False
 
+# Type for possible values of a stream_id.
 StreamID = Optional[str]
+# Type for defining how default stream_id values are assigned.
+DefaultStreamID = Literal[None, "file_line_no", "log_message"]
 
 
-class DefaultStreamID(Enum):
-    """Define how the default stream ID is determined."""
+# We don't use an Enum because we want to support direct string values and enums with string values are only properly
+# supported in Python 3.11+.
+class DefaultSID:
+    """Constants to choose how the default stream ID is determined."""
 
     # Default stream ID to None.
-    NONE = 0
+    NONE: DefaultStreamID = None
     # Default stream ID to the log's file and line number location.
-    FILE_LINE_NO = 1
+    FILE_LINE_NO: DefaultStreamID = "file_line_no"
     # Default stream ID to the log message.
-    LOG_MESSAGE = 2
+    LOG_MESSAGE: DefaultStreamID = "log_message"
 
 
 class StreamRateLimitFilter(logging.Filter):
@@ -34,7 +38,7 @@ class StreamRateLimitFilter(logging.Filter):
         self,
         period_sec: float,
         allow_next_n: int = 0,
-        default_stream_id: DefaultStreamID = DefaultStreamID.FILE_LINE_NO,
+        default_stream_id: DefaultStreamID = DefaultSID.FILE_LINE_NO,
         filter_undefined: bool = False,
         summary: bool = True,
         summary_msg: str = " + skipped {numskip} logs due to rate-limiting",
@@ -54,8 +58,8 @@ class StreamRateLimitFilter(logging.Filter):
             Define how the default value for each log's `stream_id` is determined when it isn't manually specified:
             - `NONE`: Stream ID's default to `None` which might mean they won't be rate-limited or that they will all
                       share the same rate-limit (depending on `filter_undefined`).
-            - `FILE_LINE_NO`: Each log is given a Stream ID based on the file and line number where it's located.
-            - `LOG_MESSAGE`: The exact log message (after formatting) is used as a unique stream ID. This means that
+            - `'file_line_no'`: Each log is given a Stream ID based on the file and line number where it's located.
+            - `'log_message'`: The exact log message (after formatting) is used as a unique stream ID. This means that
                all unique messages will be rate-limited.
         filter_undefined
             If logs without defined `stream_id`s should be filtered:
@@ -175,10 +179,10 @@ class StreamRateLimitFilter(logging.Filter):
             _test_default_overrides(record)
 
         default_stream_id = None
-        if self._default_stream_id == DefaultStreamID.FILE_LINE_NO:
+        if self._default_stream_id == DefaultSID.FILE_LINE_NO:
             # Assign unique default stream_ids.
             default_stream_id = f"{record.filename}:{record.lineno}"
-        if self._default_stream_id == DefaultStreamID.LOG_MESSAGE:
+        if self._default_stream_id == DefaultSID.LOG_MESSAGE:
             default_stream_id = f"{record.filename}:{record.lineno}[{record.args.__repr__()}]"
         # Get variables that can be dynamically overridden, or else use init-defaults.
         stream_id = self._get(record, "stream_id", default_stream_id)

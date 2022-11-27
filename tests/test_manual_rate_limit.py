@@ -1,14 +1,14 @@
 import time
 from unittest.mock import patch
 
-from log_rate_limit import StreamRateLimitFilter, DefaultStreamID
+from log_rate_limit import StreamRateLimitFilter, DefaultSID
 
 
 @patch("log_rate_limit.log_rate_limit.TEST_MODE", True)
 def test_manual_limit_streams(caplog) -> None:
     """Test that manual rate limiting applies separately to different streams."""
     # Create filter without any logs.
-    limiter = StreamRateLimitFilter(1, default_stream_id=DefaultStreamID.NONE)
+    limiter = StreamRateLimitFilter(1, default_stream_id=DefaultSID.NONE)
     start = time.time()
     # The first event is always allowed to fire for new streams.
     assert limiter.should_trigger("stream2", current_time=start)

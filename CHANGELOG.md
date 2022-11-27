@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Replaced boolean `all_unique` parameter with `default_stream_id` which can have multiple options, including ones that achieve the same functionality as before:
+  - `default_stream_id=None` (or `default_stream_id=DefaultSID.NONE`) is equivalent to `all_unique=False`.
+  - `default_stream_id="file_line_no"` (or `default_stream_id=DefaultSID.FILE_LINE_NO`) is equivalent to `all_unique=True`.
+
+# Added
+
+- New `default_stream_id` parameter includes a third option that wasn't previously available:
+  - `default_stream_id="log_message"` (or `default_stream_id=DefaultSID.LOG_MESSAGE`) which will set the default stream ID such that repeated log messages will be rate limited.
+
 ## [1.1.0] - 2022-11-19
 
 ### Added

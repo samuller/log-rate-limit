@@ -56,11 +56,13 @@ class StreamRateLimitFilter(logging.Filter):
             and then.
         default_stream_id
             Define how the default value for each log's `stream_id` is determined when it isn't manually specified:
-            - `NONE`: Stream ID's default to `None` which might mean they won't be rate-limited or that they will all
+            - `None`: Stream ID's default to `None` which might mean they won't be rate-limited or that they will all
                       share the same rate-limit (depending on `filter_undefined`).
             - `'file_line_no'`: Each log is given a Stream ID based on the file and line number where it's located.
             - `'log_message'`: The exact log message (after formatting) is used as a unique stream ID. This means that
                all unique messages will be rate-limited.
+            Regardless of the default, it's always possible to manually specify `stream_id`s on a per-log basis by
+            setting it in the `extra` args, e.g. `logging.info(msg, extra=RateLimit(stream_id="custom"))`.
         filter_undefined
             If logs without defined `stream_id`s should be filtered:
             - If `filter_undefined=True` then even logs without any stream_id (i.e. `stream_id=None`) will also be

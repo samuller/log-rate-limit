@@ -15,6 +15,6 @@ for i in range(100):
     logger.warning("No really, a wolf!")
     if i == 98:
         time.sleep(1)
-# Override stream as undefined to prevent rate-limiting
+# Override stream to set it as undefined (None) to prevent rate-limiting
 for _ in range(3):
     logger.warning("Sheep!", extra=RateLimit(stream_id=None))

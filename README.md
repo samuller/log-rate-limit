@@ -8,10 +8,13 @@
 
 A [logging filter](https://docs.python.org/3/library/logging.html#filter-objects) using Python's standard logging mechanisms to rate-limit logs - i.e. suppress logs when they are being output too fast.
 
-Log commands are grouped into separate **streams** that will each have their own rate limitation applied without affecting the logs in other streams. By default every log is assigned a unique stream so that only "repeated" logs will be suppressed (in this case "repeated" logs doesn't mean identical log messages, but rather logs output from the same line of code). However, logs can also be assigned streams manually to achieve various outcomes:
-- A dynamic stream ID based on the message content can be used so that different messages from the same log command can also be rate-limited separately.
+Log commands are grouped into separate **streams** that will each have their own rate limitation applied without affecting the logs in other streams. By default every log is assigned a unique stream so that only repeated log messages will be suppressed.
+
+However, logs can also be assigned streams manually to achieve various outcomes:
 - A log can be assigned to an undefined/`None` stream so that rate-limiting doesn't apply to it.
 - Logs in different parts of the code can be grouped into the same stream so that they share a rate-limit, e.g. when they all trigger due to the same issue and only some are needed to indicate it.
+
+The default can also be changed so that rate-limiting is disabled by default and only applies when streams are manually set on a log.
 
 ## Usage
 
@@ -35,7 +38,7 @@ for i in range(100):
     logger.warning("No really, a wolf!")
     if i == 98:
         time.sleep(1)
-# Override stream as undefined to prevent rate-limiting
+# Override stream to set it as undefined (None) to prevent rate-limiting
 for _ in range(3):
     logger.warning("Sheep!", extra=RateLimit(stream_id=None))
 ``` 
@@ -66,7 +69,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Add our filter, but don't assign unique streams to logs by default
-logger.addFilter(StreamRateLimitFilter(period_sec=1, all_unique=False))
+logger.addFilter(StreamRateLimitFilter(period_sec=1, default_stream_id=None))
 # Normal logs are now not rate-limited
 for i in range(3):
     logger.info(f"Status update: {i}")
@@ -124,7 +127,7 @@ Alternatively (to a LoggerAdapter), custom options can also be added by writing 
 
 ### Dynamic stream ID
 
-To ensure that the same log line doesn't rate limit with itself when it's messages actually have different content, a dynamic stream ID can be assigned based on the message content. For example:
+Dynamic stream IDs can be assigned based on any criteria you want, e.g.:
 
 ```python
 logger.warning(f"Error occured on device {device_id}!", extra=RateLimit(stream_id=f"error_on_{device_id}"))

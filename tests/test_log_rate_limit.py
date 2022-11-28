@@ -67,7 +67,7 @@ def test_log_limit_filter_log_message(capsys) -> None:
     console_handler = logging.StreamHandler()
     console_handler.setFormatter(formatter)
     # Add filter specifically to formatted handler so we can confirm continuously changing timestamps have no effect
-    # on rate-limiting.
+    # on rate-limiting of log messages.
     console_handler.addFilter(StreamRateLimitFilter(1, default_stream_id=DefaultSID.LOG_MESSAGE))
     _log.addHandler(console_handler)
 

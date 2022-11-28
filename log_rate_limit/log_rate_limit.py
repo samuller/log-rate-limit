@@ -38,7 +38,7 @@ class StreamRateLimitFilter(logging.Filter):
         self,
         period_sec: float,
         allow_next_n: int = 0,
-        default_stream_id: DefaultStreamID = DefaultSID.FILE_LINE_NO,
+        default_stream_id: DefaultStreamID = DefaultSID.LOG_MESSAGE,
         filter_undefined: bool = False,
         summary: bool = True,
         summary_msg: str = " + skipped {numskip} logs due to rate-limiting",

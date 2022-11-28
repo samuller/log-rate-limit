@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Default rate-limiting now applies to identical log messages (instead of to logs originating from the same line of code).
 - Replaced boolean `all_unique` parameter with `default_stream_id` which can have multiple options, including ones that achieve the same functionality as before:
   - `default_stream_id=None` (or `default_stream_id=DefaultSID.NONE`) is equivalent to `all_unique=False`.
   - `default_stream_id="file_line_no"` (or `default_stream_id=DefaultSID.FILE_LINE_NO`) is equivalent to `all_unique=True`.

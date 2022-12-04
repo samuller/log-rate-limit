@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2022-12-04
+
 ### Changed
 
 - Default rate-limiting now applies to identical log messages (instead of to logs originating from the same line of code).

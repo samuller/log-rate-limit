@@ -8,19 +8,19 @@
 
 A [logging filter](https://docs.python.org/3/library/logging.html#filter-objects) using Python's standard logging mechanisms to rate-limit logs - i.e. suppress logs when they are being output too fast.
 
-Log commands are grouped into separate **streams** that will each have their own rate limitation applied without affecting the logs in other streams. By default every log is assigned a unique stream so that only repeated log messages will be suppressed.
+Log commands are grouped into separate **streams** that will each have their own rate limitation applied without affecting the logs in other streams. By default every log message is assigned a unique stream so that only repeated log messages will be suppressed.
 
 However, logs can also be assigned streams manually to achieve various outcomes:
 - A log can be assigned to an undefined/`None` stream so that rate-limiting doesn't apply to it.
 - Logs in different parts of the code can be grouped into the same stream so that they share a rate-limit, e.g. when they all trigger due to the same issue and only some are needed to indicate it.
 
-The default can also be changed so that rate-limiting is disabled by default and only applies when streams are manually set on a log.
+The default can also be changed so that rate-limiting is disabled by default and only applies to logs for which a `stream_id` has been manually set.
 
 ## Usage
 
 ### Rate-limiting by default
 
-Example of rate-limiting with default options where each log is assigned to it's own stream:
+Example of rate-limiting with default options where each log message is assigned to its own stream:
 ```python
 import time
 import logging
@@ -38,7 +38,7 @@ for i in range(100):
     logger.warning("No really, a wolf!")
     if i == 98:
         time.sleep(1)
-# Override stream to set it as undefined (None) to prevent rate-limiting
+# Prevent rate-limited by setting/overriding the stream to be undefined (None)
 for _ in range(3):
     logger.warning("Sheep!", extra=RateLimit(stream_id=None))
 ``` 
@@ -89,7 +89,7 @@ WARNING:__main__:Issue!
 
 Some options set during creation of the initial filter can be overridden for individual log calls. This is done by adding the `extra` parameter to any specific log call, e.g.:
 ```python
-# Override the rate limit for this specific log call
+# Override the rate limit period for this specific log call
 logger.warning("Test1", extra=RateLimit(stream_id="stream1", period_sec=30))
 # Override the allow_next_n value for a set of logs in the same stream so that this group of logs don't restrict one
 # another from occuring consecutively

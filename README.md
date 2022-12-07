@@ -16,7 +16,27 @@ However, logs can also be assigned streams manually to achieve various outcomes:
 
 The default can also be changed so that rate-limiting is disabled by default and only applies to logs for which a `stream_id` has been manually set.
 
-## Usage
+## Quick usage
+
+Import the filter:
+
+```python
+from log_rate_limit import StreamRateLimitFilter, RateLimit
+```
+
+Use the filter with your `logger`. With default parameters it will rate limit all repetitive log message:
+
+```python
+logger.addFilter(StreamRateLimitFilter(period_sec=30))
+```
+
+All logs on `logger` will now be rate limited, but this can be disabled per-log by setting the `stream_id` to `None`:
+
+```python
+logger.warning("Something went wrong!", extra=RateLimit(stream_id=None))
+```
+
+## Usage examples
 
 ### Rate-limiting by default
 

@@ -240,3 +240,21 @@ def test_log_limit_allow_next_n(caplog):
 
     assert "___" not in caplog.text
     assert all([line in caplog.text for line in generate_lines(5)])
+
+
+def test_log_non_strings():
+    """Test that our logging filter and stream IDs work when not logging string messages."""
+    # Setup logging for this test.
+    _log = logging.getLogger(get_test_name())
+    _log.setLevel(logging.INFO)
+    # Setup filter 1-second limit which should only affect logs with stream_ids.
+    _log.addFilter(StreamRateLimitFilter(1))
+
+    _log.info("Line 1")
+    # Use non-string types for message.
+    _log.info({"a": "b"})
+    _log.info(["a", "b"])
+    _log.info({"a", "b"})
+    _log.info(("a", "b"))
+    # Test with formatting args.
+    _log.info("%s vs %s ", "a", "b")

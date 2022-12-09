@@ -258,3 +258,5 @@ def test_log_non_strings():
     _log.info(("a", "b"))
     # Test with formatting args.
     _log.info("%s vs %s ", "a", "b")
+    # Test passes by reaching here without throwing exceptions.
+    assert True

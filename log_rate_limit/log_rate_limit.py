@@ -185,12 +185,7 @@ class StreamRateLimitFilter(logging.Filter):
             # Assign unique default stream_ids.
             default_stream_id = f"{record.filename}:{record.lineno}"
         if self._default_stream_id == DefaultSID.LOG_MESSAGE:
-            if type(record.msg) == str:
-                # Get raw log message and apply any formatting arguments.
-                default_stream_id = f"{record.msg % record.args}]"
-            else:
-                # Get unique string representation from combination of message and args.
-                default_stream_id = f"{repr(record.msg)}/{repr(record.args)}"
+            default_stream_id = record.getMessage()
         # Get variables that can be dynamically overridden, or else use init-defaults.
         stream_id = self._get(record, "stream_id", default_stream_id)
         period_sec = self._get(record, "period_sec", self._period_sec)

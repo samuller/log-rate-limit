@@ -7,10 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.2] - 2022-12-22
+
 ### Added
 
 - `srl_summary_note` now gets added to all log records that pass through filter:
   - Is only set whenever a message is printed and previous messages in the same stream were suppressed.
+
+### Changed
+
+- Simplified default unique message to use `LogRecord`'s `getMessage()` function.
 
 ## [1.2.1] - 2022-12-07
 

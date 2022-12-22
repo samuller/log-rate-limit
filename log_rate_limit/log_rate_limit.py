@@ -196,6 +196,9 @@ class StreamRateLimitFilter(logging.Filter):
         skip_count = self._skipped_log_count[stream_id]
         count_left = self._count_logs_left[stream_id]
 
+        # Add any extra attributes we might add to record.
+        record.srl_summary_note = ""
+
         if stream_id is None and not self._filter_undefined:
             return True
 
@@ -203,18 +206,24 @@ class StreamRateLimitFilter(logging.Filter):
         def prep_to_allow_msg(reset_all: bool = True) -> None:
             # This value might be reset momentarily.
             self._count_logs_left[stream_id] -= 1
-            if summary and skip_count > 0:
+            # See if we should generate a summary note.
+            if skip_count > 0:
                 # Change message to indicate a summary of skipped logs.
                 # NOTE: period_sec might be incorrect if it is, or has been, overridden (either currently or recently).
                 added_msg = summary_msg.format(numskip=skip_count, stream_id=stream_id, period_sec=period_sec)
-                record.msg = f"{record.msg}\n{added_msg}"
+                summary_note = f"\n{added_msg}"
+                # Always add summary_note attribute.
+                record.srl_summary_note = summary_note
+                # Only append summary to log message if summary option is set.
+                if summary:
+                    record.msg = f"{record.msg}{summary_note}"
             # Reset counters and timers.
             if reset_all:
                 self._skipped_log_count[stream_id] = 0
                 self._count_logs_left[stream_id] = allow_next_n
                 self.reset_trigger(stream_id, period_sec)
 
-        # Allow if enough time has passed since the last log message for this stream waas triggered.
+        # Allow if enough time has passed since the last log message for this stream was triggered.
         if self.should_trigger(stream_id):
             prep_to_allow_msg()
             return True

@@ -24,13 +24,13 @@ Import the filter:
 from log_rate_limit import StreamRateLimitFilter, RateLimit
 ```
 
-Use the filter with your `logger`. With default parameters it will rate limit all repetitive log message:
+Use the filter with your `logger` - with default parameters it will rate-limit all repetitive log messages:
 
 ```python
 logger.addFilter(StreamRateLimitFilter(period_sec=30))
 ```
 
-All logs on `logger` will now be rate limited, but this can be disabled per-log by setting the `stream_id` to `None`:
+All logs on `logger` will now be rate-limited, but this can be disabled per-log by setting the `stream_id` to `None`:
 
 ```python
 logger.warning("Something went wrong!", extra=RateLimit(stream_id=None))
@@ -109,7 +109,7 @@ WARNING:__main__:Issue!
 
 Some options set during creation of the initial filter can be overridden for individual log calls. This is done by adding the `extra` parameter to any specific log call, e.g.:
 ```python
-# Override the rate limit period for this specific log call
+# Override the rate-limit period for this specific log call
 logger.warning("Test1", extra=RateLimit(stream_id="stream1", period_sec=30))
 # Override the allow_next_n value for a set of logs in the same stream so that this group of logs don't restrict one
 # another from occuring consecutively

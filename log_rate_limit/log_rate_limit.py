@@ -85,10 +85,11 @@ class StreamRateLimitFilter(logging.Filter):
             https://docs.python.org/3/library/logging.html#filter-objects
         expire_check_sec
             We expire log stream information after some time to decrease memory usage. This value determines how
-            regularly we check for expired data (which might rarely have some performance impact).
+            regularly we check for expired data (which might rarely have some performance impact). Default is set to
+            once per minute.
         expire_offset_sec
             This offset is the number of seconds after the log rate limit has been reached for a specific stream
-            before any info we store about the stream will expire.
+            before any info we store about the stream will expire. Default is set to 15 minutes.
         expire_msg
             The message used to summarise logs that were expired.
         stream_id_max_len

@@ -241,7 +241,8 @@ class StreamRateLimitFilter(logging.Filter):
         expire_msg = self._get(record, "expire_msg", self._expire_msg)
 
         # If configured, limit the length of stream_id.
-        if stream_id is not None and self._stream_id_max_len is not None:
+        if stream_id is not None:
+            # string[0:None] will just select the whole string.
             stream_id = stream_id[0 : self._stream_id_max_len]
 
         # Run expiry checks before accessing any fields from the current stream.
@@ -266,7 +267,8 @@ class StreamRateLimitFilter(logging.Filter):
             # See if we should generate a summary note.
             if skip_count > 0:
                 # Change message to indicate a summary of skipped logs.
-                # NOTE: period_sec might be incorrect if it is, or has been, overridden (either currently or recently).
+                # NOTE: period_sec might be incorrect if it is, or has been, overridden (either currently or
+                # recently).
                 added_msg = summary_msg.format(numskip=skip_count, stream_id=stream_id, period_sec=period_sec)
                 summary_note = f"\n{added_msg}"
                 # Always add summary_note attribute.

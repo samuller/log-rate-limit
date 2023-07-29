@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Tracked streams are now expired after some time.
+  - When expired, they'll report any skipped messages that haven't been reported before.
+  - This should help with long-running processes that could use increasing amounts of memory in the rare case that they continually generate both large and unique log messages (actually unique `stream_ids`).
+  - The new configurable parameters introduced for this feature are: `expire_check_sec`, `expire_offset_sec` and `expire_msg`.
+
 ## [1.2.2] - 2022-12-22
 
 ### Added

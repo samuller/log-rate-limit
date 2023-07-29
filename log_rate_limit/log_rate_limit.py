@@ -88,6 +88,8 @@ class StreamRateLimitFilter(logging.Filter):
         expire_offset_sec
             This offset is the number of seconds after the log rate limit has been reached for a specific stream
             before any info we store about the stream will expire.
+        expire_msg
+            The message used to summarise logs that were expired.
         """
         super().__init__(name)
         # These values are all defaults that can be temporarily overriden on-the-fly.

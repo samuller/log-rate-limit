@@ -337,4 +337,4 @@ def test_limited_stream_id_length():
     # Only two "unique" streams as 3rd gets batched with 2nd.
     assert srlf._key_size() == 2
     # Tests should generally avoid looking "under-the-hood" like this.
-    assert list(srlf._next_valid_time.keys()) == ["Short line", "Longer lin"]
+    assert list(srlf._streams.keys()) == ["Short line", "Longer lin"]

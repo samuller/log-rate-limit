@@ -26,6 +26,21 @@ class DefaultSID:
     LOG_MESSAGE: DefaultStreamID = "log_message"
 
 
+class StreamInfo:
+    """All information kept per-stream."""
+
+    def __init__(self) -> None:
+        """Construct object with default values."""
+        super().__init__()
+        # Next time at which rate-limiting no longer applies to each stream. Initial default of 0 will always fire
+        # since it specifies the Unix epoch timestamp.
+        self.next_valid_time: float = 0.0
+        # Count of the number of logs suppressed/skipped in each stream.
+        self.skipped_log_count: int = 0
+        # Count of extra logs left that can ignore rate-limit based on allow_next_n.
+        self.count_logs_left: int = 0
+
+
 class StreamRateLimitFilter(logging.Filter):
     """Filter out each "stream" of logs so they don't happen too fast within a given period of time.
 
@@ -117,13 +132,8 @@ class StreamRateLimitFilter(logging.Filter):
 
         # Global coutner of when next to check expired streams.
         self._next_expire_check_time: Optional[float] = None
-        # Next time at which rate-limiting no longer applies to each stream. Initial default of 0 will always fire
-        # since it specifies the Unix epoch timestamp.
-        self._next_valid_time: Dict[StreamID, float] = defaultdict(float)
-        # Count of the number of logs suppressed/skipped in each stream.
-        self._skipped_log_count: Dict[StreamID, int] = defaultdict(int)
-        # Count of extra logs left that can ignore rate-limit based on allow_next_n.
-        self._count_logs_left: Dict[StreamID, int] = defaultdict(int)
+        # All data kept in memory for each stream.
+        self._streams: Dict[StreamID, StreamInfo] = defaultdict(StreamInfo)
 
     def _get(self, record: logging.LogRecord, attribute: str, default_val: Any = None) -> Any:
         if hasattr(record, attribute):
@@ -172,7 +182,7 @@ class StreamRateLimitFilter(logging.Filter):
             current_time = time.time()
         # Allow if enough time has passed since the last log message for this stream (or if this is the first message
         # for this stream - in which case next_valid_time should get the default value of 0).
-        next_valid_time = self._next_valid_time[stream_id]
+        next_valid_time = self._streams[stream_id].next_valid_time
         return current_time >= next_valid_time
 
     def reset_trigger(
@@ -197,7 +207,7 @@ class StreamRateLimitFilter(logging.Filter):
             override_period_sec = self._period_sec
         if current_time is None:
             current_time = time.time()
-        self._next_valid_time[stream_id] = current_time + override_period_sec
+        self._streams[stream_id].next_valid_time = current_time + override_period_sec
 
     def _get_default_stream_id(self, record: logging.LogRecord) -> StreamID:
         default_stream_id = None
@@ -261,9 +271,9 @@ class StreamRateLimitFilter(logging.Filter):
 
         # Inner function to prevent code duplication.
         def prep_to_allow_msg() -> None:
-            skip_count = self._skipped_log_count[stream_id]
+            skip_count = self._streams[stream_id].skipped_log_count
             # This value might be reset momentarily.
-            self._count_logs_left[stream_id] -= 1
+            self._streams[stream_id].count_logs_left -= 1
             # See if we should generate a summary note.
             if skip_count > 0:
                 # Change message to indicate a summary of skipped logs.
@@ -281,20 +291,20 @@ class StreamRateLimitFilter(logging.Filter):
         if self.should_trigger(stream_id):
             prep_to_allow_msg()
             # Reset all counters and timers.
-            self._skipped_log_count[stream_id] = 0
-            self._count_logs_left[stream_id] = allow_next_n
+            self._streams[stream_id].skipped_log_count = 0
+            self._streams[stream_id].count_logs_left = allow_next_n
             self.reset_trigger(stream_id, period_sec)
             return True
 
         # Allow if the "allow next N" option applies and this message is within a count of N of the last allowed
         # message (and previous criteria were not met).
-        count_left = self._count_logs_left[stream_id]
+        count_left = self._streams[stream_id].count_logs_left
         if count_left > 0:
             prep_to_allow_msg()
             return True
 
         # Once we've reached here, we'll definitely skip the current log message.
-        self._skipped_log_count[stream_id] += 1
+        self._streams[stream_id].skipped_log_count += 1
 
         # We introduce our own log message if current message was skipped, but other messages were expired during
         # this processing.
@@ -326,29 +336,27 @@ class StreamRateLimitFilter(logging.Filter):
         # removing keys will require that we iterate through a copy of the dictionary's keys which is exactly
         # the part which might be using excessive memory.
         keys_to_remove = []
-        for stream_id in self._next_valid_time.keys():
-            next_valid_time = self._next_valid_time[stream_id]
+        for stream_id in self._streams.keys():
+            next_valid_time = self._streams[stream_id].next_valid_time
             # Daylight savings or other time changes might break or trigger this check during the transition period?
             if (next_valid_time + expire_time_sec) < current_time:
                 keys_to_remove.append(stream_id)
 
         expire_note = ""
         for stream_id in keys_to_remove:
-            skip_count = self._skipped_log_count[stream_id]
+            skip_count = self._streams[stream_id].skipped_log_count
             # If any logs were skipped, then we log it before clearing the cache.
             if skip_count > 0:
                 added_msg = expire_msg.format(numskip=skip_count, stream_id=stream_id, expire_time_sec=expire_time_sec)
                 expire_note += f"\n{added_msg}"
             # Remove keys
-            del self._next_valid_time[stream_id]
-            del self._skipped_log_count[stream_id]
-            del self._count_logs_left[stream_id]
+            del self._streams[stream_id]
 
         return expire_note
 
     def _key_size(self) -> int:
         """Get an estimate of the number of keys stored in memory."""
-        return len(self._next_valid_time)
+        return len(self._streams)
 
 
 class RateLimit(TypedDict, total=False):

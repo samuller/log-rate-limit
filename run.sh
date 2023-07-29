@@ -37,7 +37,6 @@ test() {
     poetry run pytest --verbose --cov=log_rate_limit --cov-branch --cov-context test \
         --cov-report=term --cov-report=html --cov-fail-under=100
 }
-}
 
 if [ "$#" -gt 1 ]; then
     echo -n "Too many args. "

@@ -244,9 +244,6 @@ class StreamRateLimitFilter(logging.Filter):
         if stream_id is not None and self._stream_id_max_len is not None:
             stream_id = stream_id[0 : self._stream_id_max_len]
 
-
-        skip_count = self._skipped_log_count[stream_id]
-        count_left = self._count_logs_left[stream_id]
         # Run expiry checks before accessing any fields from the current stream.
         srl_expire_note = self._check_expiry(expire_offset_sec, expire_msg)
 
@@ -263,6 +260,7 @@ class StreamRateLimitFilter(logging.Filter):
 
         # Inner function to prevent code duplication.
         def prep_to_allow_msg(reset_all: bool = True) -> None:
+            skip_count = self._skipped_log_count[stream_id]
             # This value might be reset momentarily.
             self._count_logs_left[stream_id] -= 1
             # See if we should generate a summary note.
@@ -289,6 +287,7 @@ class StreamRateLimitFilter(logging.Filter):
 
         # Allow if the "allow next N" option applies and this message is within a count of N of the last allowed
         # message (and previous criteria were not met).
+        count_left = self._count_logs_left[stream_id]
         if count_left > 0:
             prep_to_allow_msg(reset_all=False)
             return True

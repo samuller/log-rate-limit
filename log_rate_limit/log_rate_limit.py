@@ -99,6 +99,9 @@ class StreamRateLimitFilter(logging.Filter):
             each other.
         """
         super().__init__(name)
+        assert period_sec >= 0
+        assert allow_next_n >= 0
+        assert expire_check_sec >= 0
         assert stream_id_max_len is None or stream_id_max_len > 0
         # These values are all defaults that can be temporarily overriden on-the-fly.
         self._period_sec = period_sec

@@ -47,6 +47,7 @@ class StreamRateLimitFilter(logging.Filter):
         expire_offset_sec: int = 900,
         expire_msg: str = " [Previous logs] {numskip} logs were skipped"
         + ' (and expired after {expire_time_sec}s) for stream: "{stream_id}"',
+        stream_id_max_len: Optional[int] = None,
     ):
         """Construct a logging filter that will limit rate of logs.
 
@@ -90,8 +91,14 @@ class StreamRateLimitFilter(logging.Filter):
             before any info we store about the stream will expire.
         expire_msg
             The message used to summarise logs that were expired.
+        stream_id_max_len
+            If set, this defines a maximum length for the stream names (stream_id strings). If set to None (the
+            default) then there is no limit. Be aware that while setting this would help limit memory usage, it will
+            also make it very easy for similar log messages to get assigned to the same stream and get confused with
+            each other.
         """
         super().__init__(name)
+        assert stream_id_max_len is None or stream_id_max_len > 0
         # These values are all defaults that can be temporarily overriden on-the-fly.
         self._period_sec = period_sec
         self._allow_next_n = allow_next_n
@@ -102,6 +109,7 @@ class StreamRateLimitFilter(logging.Filter):
         self._expire_check_sec = expire_check_sec
         self._expire_offset_sec = expire_offset_sec
         self._expire_msg = expire_msg
+        self._stream_id_max_len = stream_id_max_len
 
         # Global coutner of when next to check expired streams.
         self._next_expire_check_time: Optional[float] = None
@@ -212,6 +220,10 @@ class StreamRateLimitFilter(logging.Filter):
         summary_msg = self._get(record, "summary_msg", self._summary_msg)
         expire_offset_sec = self._get(record, "expire_offset_sec", self._expire_offset_sec)
         expire_msg = self._get(record, "expire_msg", self._expire_msg)
+
+        # If configured, limit the length of stream_id.
+        if stream_id is not None and self._stream_id_max_len is not None:
+            stream_id = stream_id[0:self._stream_id_max_len]
 
         current_time = time.time()
         # Global check - not specifically related to the current stream being processed, and could affect other

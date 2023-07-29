@@ -322,3 +322,19 @@ def test_clear_with_custom_time():
     srlf.clear_old_streams(3600, time.time() + 3600 + 1)
     assert srlf._key_size() == 0
 
+
+def test_limited_stream_id_length():
+    """Test that limiting length of stream_id works."""
+    _log = logging.getLogger(get_test_name())
+    _log.setLevel(logging.INFO)
+    # Setup filter with maximum stream_id length.
+    srlf = StreamRateLimitFilter(1, stream_id_max_len=10)
+    _log.addFilter(srlf)
+
+    _log.info("Short line")
+    _log.info("Longer line")
+    _log.info("Longer line that will get confused due to same start as one above")
+    # Only two "unique" streams as 3rd gets batched with 2nd.
+    assert srlf._key_size() == 2
+    # Tests should generally avoid looking "under-the-hood" like this.
+    assert list(srlf._next_valid_time.keys()) == ["Short line", "Longer lin"]

@@ -43,6 +43,10 @@ class StreamRateLimitFilter(logging.Filter):
         summary: bool = True,
         summary_msg: str = " + skipped {numskip} logs due to rate-limiting",
         name: str = "",
+        expire_check_sec: int = 60,
+        expire_offset_sec: int = 900,
+        expire_msg: str = " [Previous logs] {numskip} logs were skipped"
+        + ' (and expired after {expire_time_sec}s) for stream: "{stream_id}"',
     ):
         """Construct a logging filter that will limit rate of logs.
 
@@ -78,6 +82,12 @@ class StreamRateLimitFilter(logging.Filter):
             Filter names form a logger hierarchical where they apply only to current or lower levels, e.g. with name
             "A.B" it will apply to "A.B" and also "A.B.C", "A.B.C.D", etc. but not to "A". See Python docs:
             https://docs.python.org/3/library/logging.html#filter-objects
+        expire_check_sec
+            We expire log stream information after some time to decrease memory usage. This value determines how
+            regularly we check for expired data (which might rarely have some performance impact).
+        expire_offset_sec
+            This offset is the number of seconds after the log rate limit has been reached for a specific stream
+            before any info we store about the stream will expire.
         """
         super().__init__(name)
         # These values are all defaults that can be temporarily overriden on-the-fly.
@@ -87,6 +97,12 @@ class StreamRateLimitFilter(logging.Filter):
         self._default_stream_id = default_stream_id
         self._summary = summary
         self._summary_msg = summary_msg
+        self._expire_check_sec = expire_check_sec
+        self._expire_offset_sec = expire_offset_sec
+        self._expire_msg = expire_msg
+
+        # Global coutner of when next to check expired streams.
+        self._next_expire_check_time: Optional[float] = None
         # Next time at which rate-limiting no longer applies to each stream. Initial default of 0 will always fire
         # since it specifies the Unix epoch timestamp.
         self._next_valid_time: Dict[StreamID, float] = defaultdict(float)
@@ -192,12 +208,29 @@ class StreamRateLimitFilter(logging.Filter):
         allow_next_n = self._get(record, "allow_next_n", self._allow_next_n)
         summary = self._get(record, "summary", self._summary)
         summary_msg = self._get(record, "summary_msg", self._summary_msg)
+        expire_offset_sec = self._get(record, "expire_offset_sec", self._expire_offset_sec)
+        expire_msg = self._get(record, "expire_msg", self._expire_msg)
+
+        current_time = time.time()
+        # Global check - not specifically related to the current stream being processed, and could affect other
+        # streams.
+        srl_expire_note = ""
+        if self._next_expire_check_time is None or current_time > self._next_expire_check_time:
+            # Check and clear from memory any stream data that has expired (specifically before accessing any fields
+            # from the current stream).
+            srl_expire_note = self.clear_old_streams(expire_offset_sec, expire_msg=expire_msg)
+            self._next_expire_check_time = current_time + self._expire_check_sec
 
         skip_count = self._skipped_log_count[stream_id]
         count_left = self._count_logs_left[stream_id]
 
-        # Add any extra attributes we might add to record.
+        # Add any extra attributes we might add to record as this allows user's own log formatting to use it (if
+        # they're only sometimes present, then string formatting will fail when attributes aren't found). All
+        # attributes added by this filter will be prepended with "srl_" (for Stream Rate Limit).
         record.srl_summary_note = ""
+        record.srl_expire_note = srl_expire_note
+        # Log any expired messages after the current message.
+        record.msg = f"{record.msg}{srl_expire_note}"
 
         if stream_id is None and not self._filter_undefined:
             return True
@@ -234,9 +267,62 @@ class StreamRateLimitFilter(logging.Filter):
             prep_to_allow_msg(reset_all=False)
             return True
 
-        # Once we've reached here, we'll definitely skip this log message.
+        # Once we've reached here, we'll definitely skip the current log message.
         self._skipped_log_count[stream_id] += 1
+
+        # We introduce our own log message if current message was skipped, but other messages were expired during
+        # this processing.
+        if srl_expire_note != "":
+            record.msg = srl_expire_note
+            return True
+
         return False
+
+    def clear_old_streams(
+        self, expire_time_sec: float = 7200, current_time: Optional[float] = None, expire_msg: str = ""
+    ) -> str:
+        """Clear old stream IDs to free up memory (in case of many large stream ID strings).
+
+        Parameters
+        ----------
+        expire_time_sec
+            Only clear out streams that haven't been reset in this period of time (in seconds). This is an amount of
+            time added after rate-limiting no longer applies anyway. Highly recommended to be a positive number.
+        current_time
+            Optional parameter that can be used to call this function for different points in time.
+        expire_msg
+            Message format of logs used to report expired streams.
+        """
+        if current_time is None:
+            current_time = time.time()
+
+        # We build a string of keys to remove first since the alternative of looping through the dictionary and
+        # removing keys will require that we iterate through a copy of the dictionary's keys which is exactly
+        # the part which might be using excessive memory.
+        keys_to_remove = []
+        for stream_id in self._next_valid_time.keys():
+            next_valid_time = self._next_valid_time[stream_id]
+            # Daylight savings or other time changes might break or trigger this check during the transition period?
+            if (next_valid_time + expire_time_sec) < current_time:
+                keys_to_remove.append(stream_id)
+
+        expire_note = ""
+        for stream_id in keys_to_remove:
+            skip_count = self._skipped_log_count[stream_id]
+            # If any logs were skipped, then we log it before clearing the cache.
+            if skip_count > 0:
+                added_msg = expire_msg.format(numskip=skip_count, stream_id=stream_id, expire_time_sec=expire_time_sec)
+                expire_note += f"\n{added_msg}"
+            # Remove keys
+            del self._next_valid_time[stream_id]
+            del self._skipped_log_count[stream_id]
+            del self._count_logs_left[stream_id]
+
+        return expire_note
+
+    def _key_size(self) -> int:
+        """Get an estimate of the number of keys stored in memory."""
+        return len(self._next_valid_time)
 
 
 class RateLimit(TypedDict, total=False):

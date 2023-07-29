@@ -260,3 +260,64 @@ def test_log_non_strings():
     _log.info("%s vs %s ", "a", "b")
     # Test passes by reaching here without throwing exceptions.
     assert True
+
+
+def test_expiry(caplog):
+    """Test our clearing process for expired stream data."""
+    _log = logging.getLogger(get_test_name())
+    _log.setLevel(logging.INFO)
+    # Setup filter with quick checking and "instant" expiry time (no offset after rate-limit).
+    srf = StreamRateLimitFilter(1, expire_check_sec=1, expire_offset_sec=0)
+    _log.addFilter(srf)
+
+    assert srf._key_size() == 0
+    _log.info("Log to expire")
+    _log.info("Log to expire")
+    assert srf._key_size() == 1
+    time.sleep(1.1)
+    # This log should also trigger and report expiry.
+    _log.info("Follow-up log")
+    # Check memory of first log is cleared.
+    assert srf._key_size() == 2 - 1
+    # Check message that reports expired logs.
+    assert "[Previous logs] 1 logs were skipped" in caplog.text
+
+
+def test_expiry_on_skipped_message(caplog):
+    """Test our clearing process for expired stream data that happens during a skipped message."""
+    _log = logging.getLogger(get_test_name())
+    _log.setLevel(logging.INFO)
+    # Setup filter with slow rate limit but quick expiry.
+    srf = StreamRateLimitFilter(2, expire_check_sec=0, expire_offset_sec=0)
+    _log.addFilter(srf)
+
+    assert srf._key_size() == 0
+    # Make this logs' expiry quicker.
+    _log.info("Log to expire", extra=RateLimit(period_sec=1))
+    _log.info("Log to expire")
+    # Also include expired message that won't get reported.
+    _log.info("Log that expires but never had skipped duplicates", extra=RateLimit(period_sec=1))
+    _log.info("Follow-up log")
+    assert srf._key_size() == 3
+    time.sleep(1.1)
+    # This log is itself skipped, but should still trigger and report expiry.
+    _log.info("Follow-up log")
+    # Check memory of first log is cleared.
+    assert srf._key_size() == 1
+    # Check message that reports expired logs.
+    assert "[Previous logs] 1 logs were skipped" in caplog.text
+
+
+def test_clear_with_custom_time():
+    """Test that clearing logs with a custom timestamp works."""
+    _log = logging.getLogger(get_test_name())
+    _log.setLevel(logging.INFO)
+    # Setup filter 1-second limit which should only affect logs with stream_ids.
+    srf = StreamRateLimitFilter(1)
+    _log.addFilter(srf)
+
+    assert srf._key_size() == 0
+    _log.info("Line 1")
+    assert srf._key_size() == 1
+    srf.clear_old_streams(3600, time.time() + 3600 + 1)
+    assert srf._key_size() == 0

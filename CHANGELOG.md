@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - This should help with long-running processes that could use increasing amounts of memory in the rare case that they continually generate both large and unique log messages (actually unique `stream_ids`).
   - The new configurable parameters introduced for this feature are: `expire_check_sec`, `expire_offset_sec` and `expire_msg`.
 - New `stream_id_max_len` option can be used to limit `stream_id` strings to a maximum length.
+- Added `print_config` option to prints provided configs at start-up. Useful for debugging.
+- Added complexity check to CI and refactored code to simplify it.
 
 ## [1.2.2] - 2022-12-22
 

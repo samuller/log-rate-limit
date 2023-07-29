@@ -259,7 +259,7 @@ class StreamRateLimitFilter(logging.Filter):
             return True
 
         # Inner function to prevent code duplication.
-        def prep_to_allow_msg(reset_all: bool = True) -> None:
+        def prep_to_allow_msg() -> None:
             skip_count = self._skipped_log_count[stream_id]
             # This value might be reset momentarily.
             self._count_logs_left[stream_id] -= 1
@@ -274,22 +274,21 @@ class StreamRateLimitFilter(logging.Filter):
                 # Only append summary to log message if summary option is set.
                 if summary:
                     record.msg = f"{record.msg}{summary_note}"
-            # Reset counters and timers.
-            if reset_all:
-                self._skipped_log_count[stream_id] = 0
-                self._count_logs_left[stream_id] = allow_next_n
-                self.reset_trigger(stream_id, period_sec)
 
         # Allow if enough time has passed since the last log message for this stream was triggered.
         if self.should_trigger(stream_id):
             prep_to_allow_msg()
+            # Reset all counters and timers.
+            self._skipped_log_count[stream_id] = 0
+            self._count_logs_left[stream_id] = allow_next_n
+            self.reset_trigger(stream_id, period_sec)
             return True
 
         # Allow if the "allow next N" option applies and this message is within a count of N of the last allowed
         # message (and previous criteria were not met).
         count_left = self._count_logs_left[stream_id]
         if count_left > 0:
-            prep_to_allow_msg(reset_all=False)
+            prep_to_allow_msg()
             return True
 
         # Once we've reached here, we'll definitely skip the current log message.

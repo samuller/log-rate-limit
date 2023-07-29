@@ -199,6 +199,26 @@ class StreamRateLimitFilter(logging.Filter):
             current_time = time.time()
         self._next_valid_time[stream_id] = current_time + override_period_sec
 
+    def _get_default_stream_id(self, record: logging.LogRecord) -> StreamID:
+        default_stream_id = None
+        if self._default_stream_id == DefaultSID.FILE_LINE_NO:
+            # Assign unique default stream_ids.
+            default_stream_id = f"{record.filename}:{record.lineno}"
+        if self._default_stream_id == DefaultSID.LOG_MESSAGE:
+            default_stream_id = record.getMessage()
+        return default_stream_id
+
+    def _check_expiry(self, expire_offset_sec: float, expire_msg: str) -> str:
+        current_time = time.time()
+        # Global check - not specifically related to the current stream being processed, and could affect other
+        # streams.
+        srl_expire_note = ""
+        if self._next_expire_check_time is None or current_time > self._next_expire_check_time:
+            # Check and clear from memory any stream data that has expired.
+            srl_expire_note = self.clear_old_streams(expire_offset_sec, expire_msg=expire_msg)
+            self._next_expire_check_time = current_time + self._expire_check_sec
+        return srl_expire_note
+
     def filter(self, record: logging.LogRecord) -> bool:
         """Filter function that determines if given log message will be displayed.
 
@@ -210,12 +230,7 @@ class StreamRateLimitFilter(logging.Filter):
         if TEST_MODE:
             _test_default_overrides(record)
 
-        default_stream_id = None
-        if self._default_stream_id == DefaultSID.FILE_LINE_NO:
-            # Assign unique default stream_ids.
-            default_stream_id = f"{record.filename}:{record.lineno}"
-        if self._default_stream_id == DefaultSID.LOG_MESSAGE:
-            default_stream_id = record.getMessage()
+        default_stream_id = self._get_default_stream_id(record)
         # Get variables that can be dynamically overridden, or else use init-defaults.
         stream_id = self._get(record, "stream_id", default_stream_id)
         period_sec = self._get(record, "period_sec", self._period_sec)
@@ -229,18 +244,11 @@ class StreamRateLimitFilter(logging.Filter):
         if stream_id is not None and self._stream_id_max_len is not None:
             stream_id = stream_id[0 : self._stream_id_max_len]
 
-        current_time = time.time()
-        # Global check - not specifically related to the current stream being processed, and could affect other
-        # streams.
-        srl_expire_note = ""
-        if self._next_expire_check_time is None or current_time > self._next_expire_check_time:
-            # Check and clear from memory any stream data that has expired (specifically before accessing any fields
-            # from the current stream).
-            srl_expire_note = self.clear_old_streams(expire_offset_sec, expire_msg=expire_msg)
-            self._next_expire_check_time = current_time + self._expire_check_sec
 
         skip_count = self._skipped_log_count[stream_id]
         count_left = self._count_logs_left[stream_id]
+        # Run expiry checks before accessing any fields from the current stream.
+        srl_expire_note = self._check_expiry(expire_offset_sec, expire_msg)
 
         # Add any extra attributes we might add to record as this allows user's own log formatting to use it (if
         # they're only sometimes present, then string formatting will fail when attributes aren't found). All

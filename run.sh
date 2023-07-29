@@ -30,7 +30,13 @@ format() {
 }
 
 test() {
-    poetry run pytest --verbose --cov=log_rate_limit --cov-report=term --cov-report=html --cov-fail-under=100
+    # --cov-context test
+    # We add "test" contexts to see how many tests cover each line of code. This helps to spot overlapping coverage
+    # or a too-high "coverage density" which means that small changes to those parts of the code will require updating
+    # and fixing many different tests.
+    poetry run pytest --verbose --cov=log_rate_limit --cov-branch --cov-context test \
+        --cov-report=term --cov-report=html --cov-fail-under=100
+}
 }
 
 if [ "$#" -gt 1 ]; then

@@ -36,3 +36,7 @@ build-backend = "poetry.core.masonry.api"
 [tool.black]
 # Change black's default line length from 88 to 120 characters.
 line-length = 120
+
+[tool.coverage.html]
+# See https://pytest-cov.readthedocs.io/en/latest/contexts.html
+show_contexts = true

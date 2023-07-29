@@ -313,11 +313,12 @@ def test_clear_with_custom_time():
     _log = logging.getLogger(get_test_name())
     _log.setLevel(logging.INFO)
     # Setup filter 1-second limit which should only affect logs with stream_ids.
-    srf = StreamRateLimitFilter(1)
-    _log.addFilter(srf)
+    srlf = StreamRateLimitFilter(1)
+    _log.addFilter(srlf)
 
-    assert srf._key_size() == 0
+    assert srlf._key_size() == 0
     _log.info("Line 1")
-    assert srf._key_size() == 1
-    srf.clear_old_streams(3600, time.time() + 3600 + 1)
-    assert srf._key_size() == 0
+    assert srlf._key_size() == 1
+    srlf.clear_old_streams(3600, time.time() + 3600 + 1)
+    assert srlf._key_size() == 0
+

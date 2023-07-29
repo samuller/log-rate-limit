@@ -46,7 +46,7 @@ class StreamRateLimitFilter(logging.Filter):
         expire_check_sec: int = 60,
         expire_offset_sec: int = 900,
         expire_msg: str = " [Previous logs] {numskip} logs were skipped"
-        + ' (and expired after {expire_time_sec}s) for stream: "{stream_id}"',
+        ' (and expired after {expire_time_sec}s) for stream: "{stream_id}"',
         stream_id_max_len: Optional[int] = None,
     ):
         """Construct a logging filter that will limit rate of logs.
@@ -227,7 +227,7 @@ class StreamRateLimitFilter(logging.Filter):
 
         # If configured, limit the length of stream_id.
         if stream_id is not None and self._stream_id_max_len is not None:
-            stream_id = stream_id[0:self._stream_id_max_len]
+            stream_id = stream_id[0 : self._stream_id_max_len]
 
         current_time = time.time()
         # Global check - not specifically related to the current stream being processed, and could affect other

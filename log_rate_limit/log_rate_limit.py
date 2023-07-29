@@ -63,6 +63,7 @@ class StreamRateLimitFilter(logging.Filter):
         expire_msg: str = " [Previous logs] {numskip} logs were skipped"
         ' (and expired after {expire_time_sec}s) for stream: "{stream_id}"',
         stream_id_max_len: Optional[int] = None,
+        print_config: bool = False,
     ):
         """Construct a logging filter that will limit rate of logs.
 
@@ -112,6 +113,8 @@ class StreamRateLimitFilter(logging.Filter):
             default) then there is no limit. Be aware that while setting this would help limit memory usage, it will
             also make it very easy for similar log messages to get assigned to the same stream and get confused with
             each other.
+        print_config
+            At initialisation, print the configuration options provided to this class.
         """
         super().__init__(name)
         assert period_sec >= 0
@@ -134,6 +137,11 @@ class StreamRateLimitFilter(logging.Filter):
         self._next_expire_check_time: Optional[float] = None
         # All data kept in memory for each stream.
         self._streams: Dict[StreamID, StreamInfo] = defaultdict(StreamInfo)
+        if print_config:
+            self._print_config()
+
+    def _print_config(self) -> None:
+        print(self.__dict__)
 
     def _get(self, record: logging.LogRecord, attribute: str, default_val: Any = None) -> Any:
         if hasattr(record, attribute):

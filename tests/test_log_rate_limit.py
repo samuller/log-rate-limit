@@ -7,6 +7,10 @@ from log_rate_limit import StreamRateLimitFilter, RateLimit, DefaultSID
 from utils import get_test_name, generate_lines
 
 
+def test_print_config(caplog) -> None:
+    StreamRateLimitFilter(1, print_config=True)
+
+
 def test_log_limit_default_unaffected(caplog) -> None:
     """Test that by default most "normal" logs (no stream_id, not in a loop) are unaffected by log limiting."""
     # Setup logging for this test.
@@ -60,7 +64,6 @@ def test_log_limit_filter_log_message(capsys) -> None:
     """Test log limiting applied separately to each unique log message (but ignoring timestamps, etc.)."""
     # Setup logging for this test.
     _log = logging.getLogger(get_test_name())
-    # logging.Formatter
     _log.setLevel(logging.INFO)
     formatter = logging.Formatter("[%(asctime)s %(levelname)s %(filename)s.%(name)s:%(lineno)s] %(message)s")
     # StreamHandler defaults output to stderr.

@@ -3,6 +3,7 @@ import time
 import logging
 from collections import defaultdict
 from typing import Any, Dict, TypedDict, Optional, Literal
+from dataclasses import dataclass
 
 # Used to enable extra code paths/checks during testing.
 TEST_MODE = False
@@ -26,19 +27,17 @@ class DefaultSID:
     LOG_MESSAGE: DefaultStreamID = "log_message"
 
 
+@dataclass
 class StreamInfo:
     """All information kept per-stream."""
 
-    def __init__(self) -> None:
-        """Construct object with default values."""
-        super().__init__()
-        # Next time at which rate-limiting no longer applies to each stream. Initial default of 0 will always fire
-        # since it specifies the Unix epoch timestamp.
-        self.next_valid_time: float = 0.0
-        # Count of the number of logs suppressed/skipped in each stream.
-        self.skipped_log_count: int = 0
-        # Count of extra logs left that can ignore rate-limit based on allow_next_n.
-        self.count_logs_left: int = 0
+    # Next time at which rate-limiting no longer applies to each stream. Initial default of 0 will always fire
+    # since it specifies the Unix epoch timestamp.
+    next_valid_time: float = 0.0
+    # Count of the number of logs suppressed/skipped in each stream.
+    skipped_log_count: int = 0
+    # Count of extra logs left that can ignore rate-limit based on allow_next_n.
+    count_logs_left: int = 0
 
 
 class StreamRateLimitFilter(logging.Filter):

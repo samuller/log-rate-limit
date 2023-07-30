@@ -14,7 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Tracked streams are now expired after some time.
   - When expired, they'll report any skipped messages that haven't been reported before.
   - This should help with long-running processes that could use increasing amounts of memory in the rare case that they continually generate both large and unique log messages (actually unique `stream_ids`).
-  - The new configurable parameters introduced for this feature are: `expire_check_sec`, `expire_offset_sec` and `expire_msg`.
+  - The new configurable parameters introduced for this feature are: `expire_check_sec` (default: 1min), `expire_offset_sec` (default: 15min) and `expire_msg`.
+    - The default values mean that a stream is considered expired 15 minutes after end of rate-limiting and that the check for expired streams will occur (at most) once a minute.
 - New `stream_id_max_len` option can be used to limit `stream_id` strings to a maximum length.
 - Added `print_config` option to print provided configs at start-up. Useful for debugging.
 - Added complexity check to CI and refactored code to simplify it.

@@ -311,11 +311,28 @@ def test_expiry_on_skipped_message(caplog):
     assert "[Previous logs] 1 logs were skipped" in caplog.text
 
 
-def test_clear_with_custom_time():
-    """Test that clearing logs with a custom timestamp works."""
+def test_manual_clear():
+    """Test that you can manually clear logs."""
     _log = logging.getLogger(get_test_name())
     _log.setLevel(logging.INFO)
-    # Setup filter 1-second limit which should only affect logs with stream_ids.
+    # Setup filter limit and expire values that will cause instant expiration, but a default expire check
+    # which is too slow to happen in this test.
+    srlf = StreamRateLimitFilter(0, expire_offset_sec=0)
+    _log.addFilter(srlf)
+
+    assert srlf._key_size() == 0
+    _log.info("Line 1")
+    assert srlf._key_size() == 1
+    # Test manually clearing when using default values.
+    srlf.clear_old_streams()
+    assert srlf._key_size() == 0
+
+
+def test_clear_with_custom_time():
+    """Test that manually clearing logs with a custom timestamp works."""
+    _log = logging.getLogger(get_test_name())
+    _log.setLevel(logging.INFO)
+    # Setup filter 1-second limit and default expire values that will be overridden.
     srlf = StreamRateLimitFilter(1)
     _log.addFilter(srlf)
 

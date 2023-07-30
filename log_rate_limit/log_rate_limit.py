@@ -50,18 +50,24 @@ class StreamRateLimitFilter(logging.Filter):
 
     def __init__(
         self,
+        # Rate-limiting.
         period_sec: float,
         allow_next_n: int = 0,
+        # Default behaviour.
         default_stream_id: DefaultStreamID = DefaultSID.LOG_MESSAGE,
         filter_undefined: bool = False,
+        # Summary messages.
         summary: bool = True,
         summary_msg: str = " + skipped {numskip} logs due to rate-limiting",
-        name: str = "",
+        # Where to apply this filter.
+        name: str = "",  # Inherited from parent.
+        # Managing memory usage.
         expire_check_sec: int = 60,
         expire_offset_sec: int = 900,
         expire_msg: str = " [Previous logs] {numskip} logs were skipped"
         ' (and expired after {expire_time_sec}s) for stream: "{stream_id}"',
         stream_id_max_len: Optional[int] = None,
+        # Debugging.
         print_config: bool = False,
     ):
         """Construct a logging filter that will limit rate of logs.
@@ -95,7 +101,7 @@ class StreamRateLimitFilter(logging.Filter):
         summary_msg
             The summary message used to summarise logs that were suppressed/skipped.
         name
-            Filter names form a logger hierarchical where they apply only to current or lower levels, e.g. with name
+            Filter names form a logger hierarchy where they apply only to current or lower levels, e.g. with name
             "A.B" it will apply to "A.B" and also "A.B.C", "A.B.C.D", etc. but not to "A". See Python docs:
             https://docs.python.org/3/library/logging.html#filter-objects
         expire_check_sec
@@ -270,7 +276,7 @@ class StreamRateLimitFilter(logging.Filter):
         # attributes added by this filter will be prepended with "srl_" (for Stream Rate Limit).
         record.srl_summary_note = ""
         record.srl_expire_note = srl_expire_note
-        # Log any expired messages after the current message.
+        # Log any expired messages after the current log message.
         record.msg = f"{record.msg}{srl_expire_note}"
 
         if stream_id is None and not self._filter_undefined:

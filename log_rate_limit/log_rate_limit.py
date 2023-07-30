@@ -326,7 +326,7 @@ class StreamRateLimitFilter(logging.Filter):
         return False
 
     def clear_old_streams(
-        self, expire_time_sec: float = 7200, current_time: Optional[float] = None, expire_msg: str = ""
+        self, expire_time_sec: Optional[float] = None, current_time: Optional[float] = None, expire_msg: str = ""
     ) -> str:
         """Clear old stream IDs to free up memory (in case of many large stream ID strings).
 
@@ -335,11 +335,14 @@ class StreamRateLimitFilter(logging.Filter):
         expire_time_sec
             Only clear out streams that haven't been reset in this period of time (in seconds). This is an amount of
             time added after rate-limiting no longer applies anyway. Highly recommended to be a positive number.
+            Default is the expire offset configured at initialisation.
         current_time
             Optional parameter that can be used to call this function for different points in time.
         expire_msg
             Message format of logs used to report expired streams.
         """
+        if expire_time_sec is None:
+            expire_time_sec = self._expire_offset_sec
         if current_time is None:
             current_time = time.time()
 

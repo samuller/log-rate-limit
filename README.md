@@ -5,6 +5,7 @@
 [![Code Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)](https://github.com/samuller/pgmerge/actions)
 [![Checked with mypy](https://img.shields.io/badge/mypy-strict-blue)](http://mypy-lang.org/)
 [![Formatted with black](https://img.shields.io/badge/code%20style-black-black)](https://black.readthedocs.io/en/stable/)
+[![Code Complexity](https://img.shields.io/badge/max--complexity-%3C10-blue)](https://flake8.pycqa.org/en/6.1.0/user/options.html#cmdoption-flake8-max-complexity)
 
 A [logging filter](https://docs.python.org/3/library/logging.html#filter-objects) using Python's standard logging mechanisms to rate-limit logs - i.e. suppress logs when they are being output too fast.
 

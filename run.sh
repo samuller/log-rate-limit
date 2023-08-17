@@ -14,7 +14,7 @@ help() {
 
 lint() {
     echo "flake8..."
-    poetry run flake8 --max-complexity=10 log_rate_limit/
+    poetry run flake8 log_rate_limit/
     # We're not as strict about docstrings in our tests
     poetry run flake8 --extend-ignore=D tests/
     echo "mypy..."

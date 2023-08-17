@@ -242,6 +242,21 @@ class StreamRateLimitFilter(logging.Filter):
             self._next_expire_check_time = current_time + self._expire_check_sec
         return srl_expire_note
 
+    def _limit_stream_id_length(self, stream_id: StreamID) -> StreamID:
+        # If configured, limit the length of stream_id.
+        if stream_id is not None:
+            # string[0:None] will just select the whole string.
+            stream_id = stream_id[0 : self._stream_id_max_len]
+        return stream_id
+
+    def _skip_log_or_add_note(self, srl_expire_note: str, record: logging.LogRecord) -> bool:
+        # We introduce our own log message if current message was skipped, but other messages were expired during
+        # this processing.
+        if srl_expire_note != "":
+            record.msg = srl_expire_note
+            return True
+        return False
+
     def filter(self, record: logging.LogRecord) -> bool:
         """Filter function that determines if given log message will be displayed.
 
@@ -263,10 +278,7 @@ class StreamRateLimitFilter(logging.Filter):
         expire_offset_sec = self._get(record, "expire_offset_sec", self._expire_offset_sec)
         expire_msg = self._get(record, "expire_msg", self._expire_msg)
 
-        # If configured, limit the length of stream_id.
-        if stream_id is not None:
-            # string[0:None] will just select the whole string.
-            stream_id = stream_id[0 : self._stream_id_max_len]
+        stream_id = self._limit_stream_id_length(stream_id)
 
         # Run expiry checks before accessing any fields from the current stream.
         srl_expire_note = self._check_expiry(expire_offset_sec, expire_msg)
@@ -321,14 +333,7 @@ class StreamRateLimitFilter(logging.Filter):
 
         # Once we've reached here, we'll definitely skip the current log message.
         stream.skipped_log_count += 1
-
-        # We introduce our own log message if current message was skipped, but other messages were expired during
-        # this processing.
-        if srl_expire_note != "":
-            record.msg = srl_expire_note
-            return True
-
-        return False
+        return self._skip_log_or_add_note(srl_expire_note, record)
 
     def clear_old_streams(
         self, expire_time_sec: Optional[float] = None, current_time: Optional[float] = None, expire_msg: str = ""

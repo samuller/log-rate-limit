@@ -42,3 +42,5 @@ jobs:
         run: ./run.sh lint
       - name: Test with pytest
         run: ./run.sh test
+      - name: Print out all outdated packages
+        run: poetry show --outdated

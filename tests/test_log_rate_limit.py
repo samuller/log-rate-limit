@@ -357,4 +357,3 @@ class TestLogRateLimit(unittest.TestCase):
 
     def test_init_streams_cache(self) -> None:
         StreamsCache({None: StreamInfo()})
-

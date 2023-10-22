@@ -44,3 +44,9 @@ jobs:
         run: ./run.sh test
       - name: Print out all outdated packages
         run: poetry show --outdated
+      - name: Upload code-coverage artifact
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: code-coverage
+          path: htmlcov

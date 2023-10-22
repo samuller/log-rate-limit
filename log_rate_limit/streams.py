@@ -2,9 +2,6 @@
 # Postponed annotations will be automatic starting with Python 3.11.
 # https://stackoverflow.com/questions/44640479/type-annotation-for-classmethod-returning-instance
 from __future__ import annotations
-import json
-import redis
-import dataclasses
 from typing import Dict, Optional
 from dataclasses import dataclass
 from collections import defaultdict
@@ -33,6 +30,7 @@ class StreamsCache(defaultdict):  # type: ignore
     This class provides an abstraction over how the data is stored. The default is to just store it in-memory as a
     Python dictionary.
     """
+
     def __init__(
         self,
         built_dict: Optional[Dict[StreamID, StreamInfo]] = None,

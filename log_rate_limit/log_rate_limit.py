@@ -1,15 +1,13 @@
 """Module for the StreamRateLimitFilter class."""
 import time
 import logging
-from collections import defaultdict
-from typing import Any, Dict, TypedDict, Optional, Literal
-from dataclasses import dataclass
+from typing import Any, TypedDict, Optional, Literal, cast
+
+from log_rate_limit.streams import StreamID, StreamsCache
 
 # Used to enable extra code paths/checks during testing.
 TEST_MODE = False
 
-# Type for possible values of a stream_id.
-StreamID = Optional[str]
 # Type for defining how default stream_id values are assigned.
 DefaultStreamID = Literal[None, "file_line_no", "log_message"]
 
@@ -25,19 +23,6 @@ class DefaultSID:
     FILE_LINE_NO: DefaultStreamID = "file_line_no"
     # Default stream ID to the log message.
     LOG_MESSAGE: DefaultStreamID = "log_message"
-
-
-@dataclass
-class StreamInfo:
-    """All information kept per-stream."""
-
-    # Next time at which rate-limiting no longer applies to each stream. Initial default of 0 will always fire
-    # since it specifies the Unix epoch timestamp.
-    next_valid_time: float = 0.0
-    # Count of the number of logs suppressed/skipped in each stream.
-    skipped_log_count: int = 0
-    # Count of extra logs left that can ignore rate-limit based on allow_next_n.
-    count_logs_left: int = 0
 
 
 class StreamRateLimitFilter(logging.Filter):
@@ -141,7 +126,7 @@ class StreamRateLimitFilter(logging.Filter):
         # Global coutner of when next to check expired streams.
         self._next_expire_check_time: Optional[float] = None
         # All data kept in memory for each stream.
-        self._streams: Dict[StreamID, StreamInfo] = defaultdict(StreamInfo)
+        self._streams = StreamsCache()
         if print_config:
             self._print_config()
 
@@ -195,7 +180,7 @@ class StreamRateLimitFilter(logging.Filter):
             current_time = time.time()
         # Allow if enough time has passed since the last log message for this stream (or if this is the first message
         # for this stream - in which case next_valid_time should get the default value of 0).
-        next_valid_time = self._streams[stream_id].next_valid_time
+        next_valid_time = cast(float, self._streams[stream_id].next_valid_time)
         return current_time >= next_valid_time
 
     def reset_trigger(

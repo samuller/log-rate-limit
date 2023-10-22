@@ -35,6 +35,7 @@ class StreamsCache(defaultdict):  # type: ignore
     """
     def __init__(
         self,
+        built_dict: Optional[Dict[StreamID, StreamInfo]] = None,
     ) -> None:
         """Construct object with default values."""
         default_factory = StreamInfo

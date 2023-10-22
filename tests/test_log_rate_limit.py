@@ -4,7 +4,7 @@ import logging
 import unittest
 from unittest.mock import patch
 
-from log_rate_limit import StreamRateLimitFilter, RateLimit, DefaultSID
+from log_rate_limit import StreamRateLimitFilter, RateLimit, DefaultSID, StreamsCache, StreamInfo
 
 from utils import get_test_name, generate_lines
 
@@ -354,3 +354,7 @@ class TestLogRateLimit(unittest.TestCase):
         assert srlf._key_size() == 2
         # Tests should generally avoid looking "under-the-hood" like this.
         assert list(srlf._streams.keys()) == ["Short line", "Longer lin"]
+
+    def test_init_streams_cache(self) -> None:
+        StreamsCache({None: StreamInfo()})
+

@@ -1,13 +1,10 @@
 import time
-import pytest
 import logging
 from unittest.mock import patch
 
 from log_rate_limit import StreamRateLimitFilter, RateLimit, DefaultSID, StreamsCache, StreamInfo
 
 from utils import get_test_name, generate_lines
-
-
 
 
 def test_print_config() -> None:

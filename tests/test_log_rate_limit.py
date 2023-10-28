@@ -33,7 +33,7 @@ def test_log_limit_default_unaffected(caplog) -> None:
     for i in range(2):
         # Changing message to avoid duplicate check from failing (and we know, from the implementation, that the
         # message itself has no affect on filtering).
-        _log.info(f"Line {6+i}", extra=RateLimit(stream_id=None))
+        _log.info(f"Line {6 + i}", extra=RateLimit(stream_id=None))
 
     assert "___" not in caplog.text
     assert all([line in caplog.text for line in generate_lines(7)])

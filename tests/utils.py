@@ -11,5 +11,5 @@ def get_test_name():
 def generate_lines(count):
     lines = []
     for i in range(count):
-        lines.append(f"Line {i+1}")
+        lines.append(f"Line {i + 1}")
     return lines

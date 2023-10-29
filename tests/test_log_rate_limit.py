@@ -43,7 +43,7 @@ def patch_redis_url(url_for_redis):
         # Clear redis database between tests.
         import redis
 
-        redis = redis.Redis.from_url("redis://redis-lrl:6379")
+        redis = redis.Redis.from_url(REDIS_TEST_URL)
         redis.flushdb()
 
 

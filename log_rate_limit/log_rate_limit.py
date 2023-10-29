@@ -1,9 +1,9 @@
 """Module for the StreamRateLimitFilter class."""
 import time
 import logging
-from typing import Any, TypedDict, Optional, Literal, cast
+from typing import Any, TypedDict, Optional, Literal
 
-from log_rate_limit.streams import StreamID, StreamsCache
+from log_rate_limit.streams import StreamID, StreamsCacheDict, StreamsCacheRedis, StreamsCache
 
 # Used to enable extra code paths/checks during testing.
 TEST_MODE = False
@@ -52,6 +52,8 @@ class StreamRateLimitFilter(logging.Filter):
         expire_msg: str = " [Previous logs] {numskip} logs were skipped"
         ' (and expired after {expire_time_sec}s) for stream: "{stream_id}"',
         stream_id_max_len: Optional[int] = None,
+        redis_url: Optional[str] = None,
+        redis_key_prefix: str = "log-rate-cache",
         # Debugging.
         print_config: bool = False,
     ):
@@ -103,6 +105,14 @@ class StreamRateLimitFilter(logging.Filter):
             default) then there is no limit. Be aware that while setting this would help limit memory usage, it will
             also make it very easy for similar log messages to get assigned to the same stream and get confused with
             each other.
+        redis_url
+            If a Redis database URL is provided then per-stream details will be cached in a the given Redis database
+            rather than in a dictionary in the current process's memory. Using Redis allows multiple processes with a
+            single output stream to share their rate-limiting, and it also allows cache to be monitored externally.
+        redis_prefix
+            A prefix string to add to all keys used in Redis. This can be used to determine whether separate instances
+            of the cache are separate or whether their stream info is shared. Has to be less than 64 characters in
+            length to limit total length of Redis keys.
         print_config
             At initialisation, print the configuration options provided to this class.
         """
@@ -126,7 +136,10 @@ class StreamRateLimitFilter(logging.Filter):
         # Global coutner of when next to check expired streams.
         self._next_expire_check_time: Optional[float] = None
         # All data kept in memory for each stream.
-        self._streams = StreamsCache()
+        if redis_url is not None:
+            self._streams: StreamsCache = StreamsCacheRedis(redis_url=redis_url, redis_prefix=redis_key_prefix)
+        else:
+            self._streams = StreamsCacheDict()
         if print_config:
             self._print_config()
 
@@ -180,7 +193,7 @@ class StreamRateLimitFilter(logging.Filter):
             current_time = time.time()
         # Allow if enough time has passed since the last log message for this stream (or if this is the first message
         # for this stream - in which case next_valid_time should get the default value of 0).
-        next_valid_time = cast(float, self._streams[stream_id].next_valid_time)
+        next_valid_time = self._streams[stream_id].next_valid_time
         return current_time >= next_valid_time
 
     def reset_trigger(
@@ -275,7 +288,6 @@ class StreamRateLimitFilter(logging.Filter):
         record.srl_expire_note = srl_expire_note
         # Log any expired messages after the current log message.
         record.msg = f"{record.msg}{srl_expire_note}"
-
         if stream_id is None and not self._filter_undefined:
             return True
 

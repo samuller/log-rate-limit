@@ -1,18 +1,59 @@
 import time
+import pytest
 import logging
 from unittest.mock import patch
 
-from log_rate_limit import StreamRateLimitFilter, RateLimit, DefaultSID, StreamsCache, StreamInfo
+from log_rate_limit import StreamRateLimitFilter, RateLimit, DefaultSID
+from log_rate_limit.streams import StreamsCacheDict, StreamInfo, StreamsCacheRedis
 
 from utils import generate_lines
 
 
-def test_print_config() -> None:
+REDIS_TEST_URL = "redis://redis-lrl:6379"
+
+
+@pytest.fixture()
+def url_for_redis():
+    return None
+
+
+@pytest.fixture(autouse=True)
+def patch_redis_url(url_for_redis):
+    if url_for_redis is None:
+        # Have this fixture do nothing.
+        yield
+        return
+
+    global StreamRateLimitFilter
+
+    class SRLFWithCustomRedis(StreamRateLimitFilter):
+        def __init__(self, *args, **kwargs):
+            kwargs["redis_url"] = url_for_redis
+            super().__init__(*args, **kwargs)
+
+    try:
+        # Override StreamRateLimitFilter during tests.
+        prevSRLF = StreamRateLimitFilter
+        StreamRateLimitFilter = SRLFWithCustomRedis
+        yield
+    finally:
+        # Undo override.
+        StreamRateLimitFilter = prevSRLF
+        # Clear redis database between tests.
+        import redis
+
+        redis = redis.Redis.from_url("redis://redis-lrl:6379")
+        redis.flushdb()
+
+
+@pytest.mark.parametrize("url_for_redis", [None, REDIS_TEST_URL])
+def test_print_config(capsys) -> None:
     StreamRateLimitFilter(1, print_config=True)
     output = capsys.readouterr().out
     assert output.startswith("StreamRateLimitFilter configuration: {")
 
 
+@pytest.mark.parametrize("url_for_redis", [None, REDIS_TEST_URL])
 def test_log_limit_default_unaffected(request, caplog) -> None:
     """Test that by default most "normal" logs (no stream_id, not in a loop) are unaffected by log limiting."""
     # Setup logging for this test.
@@ -41,6 +82,7 @@ def test_log_limit_default_unaffected(request, caplog) -> None:
     assert len(log_lines) == len(set(log_lines))
 
 
+@pytest.mark.parametrize("url_for_redis", [None, REDIS_TEST_URL])
 def test_log_limit_filter_line_no(request, caplog) -> None:
     """Test log limiting applied separately to each unique log on a different line."""
     # Setup logging for this test.
@@ -62,6 +104,7 @@ def test_log_limit_filter_line_no(request, caplog) -> None:
     assert len(log_lines) == len(set(log_lines))
 
 
+@pytest.mark.parametrize("url_for_redis", [None, REDIS_TEST_URL])
 def test_log_limit_filter_log_message(request, capsys) -> None:
     """Test log limiting applied separately to each unique log message (but ignoring timestamps, etc.)."""
     # Setup logging for this test.
@@ -101,6 +144,7 @@ def test_log_limit_filter_log_message(request, capsys) -> None:
     assert len(log_lines) == len(set(log_lines))
 
 
+@pytest.mark.parametrize("url_for_redis", [None, REDIS_TEST_URL])
 # We add this patch to every test that uses "extra=RateLimit(...)" so that we can expand meaningfulness of code
 # coverage. See _test_default_overrides() function in log_rate_limit.py for more details.
 @patch("log_rate_limit.log_rate_limit.TEST_MODE", True)
@@ -129,6 +173,7 @@ def test_log_limit_filter_undefined(request, caplog) -> None:
     assert all([line in caplog.text for line in generate_lines(2)])
 
 
+@pytest.mark.parametrize("url_for_redis", [None, REDIS_TEST_URL])
 @patch("log_rate_limit.log_rate_limit.TEST_MODE", True)
 def test_log_limit_streams(request, caplog) -> None:
     """Test that log limiting applies separately to different streams."""
@@ -154,6 +199,7 @@ def test_log_limit_streams(request, caplog) -> None:
     assert all([line in caplog.text for line in generate_lines(4)])
 
 
+@pytest.mark.parametrize("url_for_redis", [None, REDIS_TEST_URL])
 @patch("log_rate_limit.log_rate_limit.TEST_MODE", True)
 def test_log_limit_dynamic_period_sec(request, caplog):
     """Test that the period_sec value can be dynamically changed per-stream."""
@@ -187,6 +233,7 @@ def test_log_limit_dynamic_period_sec(request, caplog):
     assert all([line in caplog.text for line in generate_lines(6)])
 
 
+@pytest.mark.parametrize("url_for_redis", [None, REDIS_TEST_URL])
 @patch("log_rate_limit.log_rate_limit.TEST_MODE", True)
 def test_log_limit_summary(request, caplog):
     """Test the summary functionality."""
@@ -222,6 +269,7 @@ def test_log_limit_summary(request, caplog):
     assert "Some logs missed" in caplog.text
 
 
+@pytest.mark.parametrize("url_for_redis", [None, REDIS_TEST_URL])
 @patch("log_rate_limit.log_rate_limit.TEST_MODE", True)
 def test_log_limit_allow_next_n(request, caplog):
     """Test the summary functionality."""
@@ -247,6 +295,7 @@ def test_log_limit_allow_next_n(request, caplog):
     assert all([line in caplog.text for line in generate_lines(5)])
 
 
+@pytest.mark.parametrize("url_for_redis", [None, REDIS_TEST_URL])
 def test_log_non_strings(request):
     """Test that our logging filter and stream IDs work when not logging string messages."""
     # Setup logging for this test.
@@ -267,6 +316,7 @@ def test_log_non_strings(request):
     assert True
 
 
+@pytest.mark.parametrize("url_for_redis", [None, REDIS_TEST_URL])
 def test_expiry(request, caplog):
     """Test our clearing process for expired stream data."""
     _log = logging.getLogger(request.node.name)
@@ -288,6 +338,7 @@ def test_expiry(request, caplog):
     assert "[Previous logs] 1 logs were skipped" in caplog.text
 
 
+@pytest.mark.parametrize("url_for_redis", [None, REDIS_TEST_URL])
 def test_expiry_on_skipped_message(request, caplog):
     """Test our clearing process for expired stream data that happens during a skipped message."""
     _log = logging.getLogger(request.node.name)
@@ -295,6 +346,7 @@ def test_expiry_on_skipped_message(request, caplog):
     # Setup filter with slow rate limit but quick expiry.
     srf = StreamRateLimitFilter(2, expire_check_sec=0, expire_offset_sec=0)
     _log.addFilter(srf)
+    assert len(_log.filters) == 1
 
     assert srf._key_size() == 0
     # Make this logs' expiry quicker.
@@ -303,7 +355,7 @@ def test_expiry_on_skipped_message(request, caplog):
     # Also include expired message that won't get reported.
     _log.info("Log that expires but never had skipped duplicates", extra=RateLimit(period_sec=1))
     _log.info("Follow-up log")
-    assert srf._key_size() == 3
+    assert srf._key_size() == 3, srf._streams.keys()
     time.sleep(1.1)
     # This log is itself skipped, but should still trigger and report expiry.
     _log.info("Follow-up log")
@@ -313,6 +365,7 @@ def test_expiry_on_skipped_message(request, caplog):
     assert "[Previous logs] 1 logs were skipped" in caplog.text
 
 
+@pytest.mark.parametrize("url_for_redis", [None, REDIS_TEST_URL])
 def test_manual_clear(request):
     """Test that you can manually clear logs."""
     _log = logging.getLogger(request.node.name)
@@ -330,6 +383,7 @@ def test_manual_clear(request):
     assert srlf._key_size() == 0
 
 
+@pytest.mark.parametrize("url_for_redis", [None, REDIS_TEST_URL])
 def test_clear_with_custom_time(request):
     """Test that manually clearing logs with a custom timestamp works."""
     _log = logging.getLogger(request.node.name)
@@ -345,6 +399,7 @@ def test_clear_with_custom_time(request):
     assert srlf._key_size() == 0
 
 
+@pytest.mark.parametrize("url_for_redis", [None, REDIS_TEST_URL])
 def test_limited_stream_id_length(request):
     """Test that limiting length of stream_id works."""
     _log = logging.getLogger(request.node.name)
@@ -362,8 +417,44 @@ def test_limited_stream_id_length(request):
     assert set(srlf._streams.keys()) == {"Short line", "Longer lin"}
 
 
-def test_init_streams_cache() -> None:
-    StreamsCache({None: StreamInfo()})
+@pytest.mark.parametrize("url_for_redis", [None, REDIS_TEST_URL])
+def test_redis_use_hash_for_long_stream_ids(request):
+    """Test that our Redis cache uses hashes for long stream IDs."""
+    _log = logging.getLogger(request.node.name)
+    _log.setLevel(logging.INFO)
+    # Setup filter with maximum stream_id length.
+    srlf = StreamRateLimitFilter(1)
+    _log.addFilter(srlf)
 
-    # print(json)
-    # print(StreamsRedisCache.from_json(json))
+    full_line = (
+        "Longer line that is so long that our Redis cache will prefer to store its StreamID as a hash than to"
+        " store the string itself: " + ("1234567890" * 8)
+    )
+    _log.info(full_line)
+    if type(srlf._streams) is StreamsCacheRedis:
+        assert set(srlf._streams.keys()) == {"Longer line that is so long that...(9b48ee097f1526cca99fff345980ee67)"}
+    else:
+        # TODO: use same hasing for non-Redis code...
+        assert set(srlf._streams.keys()) == {full_line}
+
+
+def test_init_streams_cache_dict() -> None:
+    """Test StreamsCacheDict initiated with pre-defined dictionary (for code coverage)."""
+    scd = StreamsCacheDict({None: StreamInfo(skipped_log_count=123)})
+    assert scd[None].skipped_log_count == 123
+
+
+def test_scr_prefix_key_limit() -> None:
+    """Test use of StreamsCacheRedis's __setitem__ (for code coverage)."""
+    long_string = ("1234567890" * 6) + "12345"
+    assert len(long_string) == 65
+    with pytest.raises(ValueError) as exc_info:
+        StreamsCacheRedis(redis_url=REDIS_TEST_URL, redis_prefix=long_string)
+    assert str(exc_info.value) == "redis_prefix string should be shorter than 64 characters."
+
+
+def test_streams_cache_redis_set_item() -> None:
+    """Test use of StreamsCacheRedis's __setitem__ (for code coverage)."""
+    scr = StreamsCacheRedis(redis_url=REDIS_TEST_URL)
+    scr["TestKey1"] = StreamInfo(skipped_log_count=456)
+    assert scr["TestKey1"].skipped_log_count == 456

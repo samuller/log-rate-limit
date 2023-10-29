@@ -9,6 +9,8 @@ from utils import generate_lines
 
 def test_print_config() -> None:
     StreamRateLimitFilter(1, print_config=True)
+    output = capsys.readouterr().out
+    assert output.startswith("StreamRateLimitFilter configuration: {")
 
 
 def test_log_limit_default_unaffected(request, caplog) -> None:

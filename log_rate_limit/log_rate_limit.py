@@ -131,7 +131,7 @@ class StreamRateLimitFilter(logging.Filter):
             self._print_config()
 
     def _print_config(self) -> None:
-        print(self.__dict__)
+        print("StreamRateLimitFilter configuration:", self.__dict__)
 
     def _get(self, record: logging.LogRecord, attribute: str, default_val: Any = None) -> Any:
         if hasattr(record, attribute):

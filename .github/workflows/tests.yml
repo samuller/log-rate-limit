@@ -56,7 +56,7 @@ jobs:
       - name: Check for linting issues
         run: ./run.sh lint
       - name: Test with pytest
-        run: ./run.sh test
+        run: REDIS_TEST_URL="redis://localhost:6379" ./run.sh test
       - name: Print out all outdated packages
         run: poetry show --outdated
       - name: Upload code-coverage artifact

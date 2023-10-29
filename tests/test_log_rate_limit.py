@@ -1,3 +1,4 @@
+import os
 import time
 import pytest
 import logging
@@ -9,7 +10,7 @@ from log_rate_limit.streams import StreamsCacheDict, StreamInfo, StreamsCacheRed
 from utils import generate_lines
 
 
-REDIS_TEST_URL = "redis://redis-lrl:6379"
+REDIS_TEST_URL = os.getenv("REDIS_TEST_URL", "redis://redis-lrl:6379")
 
 
 @pytest.fixture()

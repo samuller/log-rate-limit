@@ -154,7 +154,10 @@ class StreamRateLimitFilter(logging.Filter):
     def trigger(
         self, stream_id: str, override_period_sec: Optional[float] = None, current_time: Optional[float] = None
     ) -> bool:
-        """Trigger a specific stream and then also resets its rate-limit timer - but only if rate-limiting allows.
+        """Trigger and reset rate-limit timer of specific stream if rate-limiting allows.
+
+        This allows you to use StreamRateLimitFilter for non-logging use-cases to rate-limit anything. See "manual"
+        example in tests.
 
         Parameters
         ----------

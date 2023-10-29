@@ -12,7 +12,7 @@ def test_print_config() -> None:
 
 
 def test_log_limit_default_unaffected(request, caplog) -> None:
-    """Test that by default most "norrequestmal" logs (no stream_id, not in a loop) are unaffected by log limiting."""
+    """Test that by default most "normal" logs (no stream_id, not in a loop) are unaffected by log limiting."""
     # Setup logging for this test.
     _log = logging.getLogger(request.node.name)
     _log.setLevel(logging.INFO)

@@ -52,6 +52,7 @@ class StreamRateLimitFilter(logging.Filter):
         expire_msg: str = " [Previous logs] {numskip} logs were skipped"
         ' (and expired after {expire_time_sec}s) for stream: "{stream_id}"',
         stream_id_max_len: Optional[int] = None,
+        # Using Redis for storage.
         redis_url: Optional[str] = None,
         redis_key_prefix: str = "log-rate-cache",
         # Debugging.

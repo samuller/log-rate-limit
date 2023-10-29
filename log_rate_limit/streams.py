@@ -139,7 +139,8 @@ class StreamsCacheRedis(StreamsCache):
         # Hash long stream IDs. 192 limit chosen as half-way between 128 & 256. 128 is too short as it's shorter than
         # our max hashed length.
         if len(full_key) > 192 and key is not None:
-            # We use MD5 as we want a hash that's fast, short and doesn't need to be very secure.
+            # We use MD5 as we want a hash that's fast, short and doesn't need to be very secure. We don't use Python's
+            # string __hash__() function as it specifically randomizes the hash between Python process instances.
             hash = hashlib.md5(key.encode(errors="backslashreplace")).hexdigest()
             short_key = key[0:32] + "..."
             # Expected max. length of new key is: 64+9+35+2+32 = 142.

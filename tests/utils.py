@@ -1,5 +1,4 @@
 """Utility functions used in the tests."""
-import inspect
 
 
 def generate_lines(count):

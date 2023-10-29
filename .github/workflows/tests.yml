@@ -37,7 +37,7 @@ jobs:
         shell: bash
         run: curl -sSL https://install.python-poetry.org | POETRY_VERSION=1.4.2 python -
       - name: Install dependencies
-        run: poetry install
+        run: poetry install --extras=redis
       - name: Check for linting issues
         run: ./run.sh lint
       - name: Test with pytest

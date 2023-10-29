@@ -434,7 +434,7 @@ def test_redis_use_hash_for_long_stream_ids(request):
     if type(srlf._streams) is StreamsCacheRedis:
         assert set(srlf._streams.keys()) == {"Longer line that is so long that...(9b48ee097f1526cca99fff345980ee67)"}
     else:
-        # TODO: use same hasing for non-Redis code...
+        # TODO: use same hashing for non-Redis code...
         assert set(srlf._streams.keys()) == {full_line}
 
 

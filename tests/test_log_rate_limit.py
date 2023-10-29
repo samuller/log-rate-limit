@@ -4,17 +4,17 @@ from unittest.mock import patch
 
 from log_rate_limit import StreamRateLimitFilter, RateLimit, DefaultSID, StreamsCache, StreamInfo
 
-from utils import get_test_name, generate_lines
+from utils import generate_lines
 
 
 def test_print_config() -> None:
     StreamRateLimitFilter(1, print_config=True)
 
 
-def test_log_limit_default_unaffected(caplog) -> None:
-    """Test that by default most "normal" logs (no stream_id, not in a loop) are unaffected by log limiting."""
+def test_log_limit_default_unaffected(request, caplog) -> None:
+    """Test that by default most "norrequestmal" logs (no stream_id, not in a loop) are unaffected by log limiting."""
     # Setup logging for this test.
-    _log = logging.getLogger(get_test_name())
+    _log = logging.getLogger(request.node.name)
     _log.setLevel(logging.INFO)
     # Setup filter 1-second limit which should only affect logs with stream_ids.
     _log.addFilter(StreamRateLimitFilter(1))
@@ -39,10 +39,10 @@ def test_log_limit_default_unaffected(caplog) -> None:
     assert len(log_lines) == len(set(log_lines))
 
 
-def test_log_limit_filter_line_no(caplog) -> None:
+def test_log_limit_filter_line_no(request, caplog) -> None:
     """Test log limiting applied separately to each unique log on a different line."""
     # Setup logging for this test.
-    _log = logging.getLogger(get_test_name())
+    _log = logging.getLogger(request.node.name)
     _log.setLevel(logging.INFO)
     # Setup filter so all logs have a 1-second limit.
     _log.addFilter(StreamRateLimitFilter(1, default_stream_id=DefaultSID.FILE_LINE_NO))
@@ -60,10 +60,10 @@ def test_log_limit_filter_line_no(caplog) -> None:
     assert len(log_lines) == len(set(log_lines))
 
 
-def test_log_limit_filter_log_message(capsys) -> None:
+def test_log_limit_filter_log_message(request, capsys) -> None:
     """Test log limiting applied separately to each unique log message (but ignoring timestamps, etc.)."""
     # Setup logging for this test.
-    _log = logging.getLogger(get_test_name())
+    _log = logging.getLogger(request.node.name)
     _log.setLevel(logging.INFO)
     formatter = logging.Formatter("[%(asctime)s %(levelname)s %(filename)s.%(name)s:%(lineno)s] %(message)s")
     # StreamHandler defaults output to stderr.
@@ -102,10 +102,10 @@ def test_log_limit_filter_log_message(capsys) -> None:
 # We add this patch to every test that uses "extra=RateLimit(...)" so that we can expand meaningfulness of code
 # coverage. See _test_default_overrides() function in log_rate_limit.py for more details.
 @patch("log_rate_limit.log_rate_limit.TEST_MODE", True)
-def test_log_limit_filter_undefined(caplog) -> None:
+def test_log_limit_filter_undefined(request, caplog) -> None:
     """Test log limiting applied to all logs without stream_ids."""
     # Setup logging for this test.
-    _log = logging.getLogger(get_test_name())
+    _log = logging.getLogger(request.node.name)
     _log.setLevel(logging.INFO)
     # Setup to filter all logs in the same stream without needing to define a stream_id each time.
     _log.addFilter(StreamRateLimitFilter(1, default_stream_id=DefaultSID.NONE, filter_undefined=True))
@@ -128,10 +128,10 @@ def test_log_limit_filter_undefined(caplog) -> None:
 
 
 @patch("log_rate_limit.log_rate_limit.TEST_MODE", True)
-def test_log_limit_streams(caplog) -> None:
+def test_log_limit_streams(request, caplog) -> None:
     """Test that log limiting applies separately to different streams."""
     # Setup logging.
-    _log = logging.getLogger(get_test_name())
+    _log = logging.getLogger(request.node.name)
     _log.setLevel(logging.INFO)
 
     # Setup filter so logs with stream-ids have a 1-second limit.
@@ -153,10 +153,10 @@ def test_log_limit_streams(caplog) -> None:
 
 
 @patch("log_rate_limit.log_rate_limit.TEST_MODE", True)
-def test_log_limit_dynamic_period_sec(caplog):
+def test_log_limit_dynamic_period_sec(request, caplog):
     """Test that the period_sec value can be dynamically changed per-stream."""
     # Setup logging.
-    _log = logging.getLogger(get_test_name())
+    _log = logging.getLogger(request.node.name)
     _log.setLevel(logging.INFO)
 
     # Setup filter so logs with stream-ids have a 1-second limit.
@@ -186,10 +186,10 @@ def test_log_limit_dynamic_period_sec(caplog):
 
 
 @patch("log_rate_limit.log_rate_limit.TEST_MODE", True)
-def test_log_limit_summary(caplog):
+def test_log_limit_summary(request, caplog):
     """Test the summary functionality."""
     # Setup logging.
-    _log = logging.getLogger(get_test_name())
+    _log = logging.getLogger(request.node.name)
     _log.setLevel(logging.INFO)
 
     # Setup to filter all logs in the same stream without needing to define a stream_id each time.
@@ -221,10 +221,10 @@ def test_log_limit_summary(caplog):
 
 
 @patch("log_rate_limit.log_rate_limit.TEST_MODE", True)
-def test_log_limit_allow_next_n(caplog):
+def test_log_limit_allow_next_n(request, caplog):
     """Test the summary functionality."""
     # Setup logging.
-    _log = logging.getLogger(get_test_name())
+    _log = logging.getLogger(request.node.name)
     _log.setLevel(logging.INFO)
 
     # Setup to filter all logs in the same stream without needing to define a stream_id each time.
@@ -245,10 +245,10 @@ def test_log_limit_allow_next_n(caplog):
     assert all([line in caplog.text for line in generate_lines(5)])
 
 
-def test_log_non_strings():
+def test_log_non_strings(request):
     """Test that our logging filter and stream IDs work when not logging string messages."""
     # Setup logging for this test.
-    _log = logging.getLogger(get_test_name())
+    _log = logging.getLogger(request.node.name)
     _log.setLevel(logging.INFO)
     # Setup filter 1-second limit which should only affect logs with stream_ids.
     _log.addFilter(StreamRateLimitFilter(1))
@@ -265,9 +265,9 @@ def test_log_non_strings():
     assert True
 
 
-def test_expiry(caplog):
+def test_expiry(request, caplog):
     """Test our clearing process for expired stream data."""
-    _log = logging.getLogger(get_test_name())
+    _log = logging.getLogger(request.node.name)
     _log.setLevel(logging.INFO)
     # Setup filter with quick checking and "instant" expiry time (no offset after rate-limit).
     srf = StreamRateLimitFilter(1, expire_check_sec=1, expire_offset_sec=0)
@@ -286,9 +286,9 @@ def test_expiry(caplog):
     assert "[Previous logs] 1 logs were skipped" in caplog.text
 
 
-def test_expiry_on_skipped_message(caplog):
+def test_expiry_on_skipped_message(request, caplog):
     """Test our clearing process for expired stream data that happens during a skipped message."""
-    _log = logging.getLogger(get_test_name())
+    _log = logging.getLogger(request.node.name)
     _log.setLevel(logging.INFO)
     # Setup filter with slow rate limit but quick expiry.
     srf = StreamRateLimitFilter(2, expire_check_sec=0, expire_offset_sec=0)
@@ -311,9 +311,9 @@ def test_expiry_on_skipped_message(caplog):
     assert "[Previous logs] 1 logs were skipped" in caplog.text
 
 
-def test_manual_clear():
+def test_manual_clear(request):
     """Test that you can manually clear logs."""
-    _log = logging.getLogger(get_test_name())
+    _log = logging.getLogger(request.node.name)
     _log.setLevel(logging.INFO)
     # Setup filter limit and expire values that will cause instant expiration, but a default expire check
     # which is too slow to happen in this test.
@@ -328,9 +328,9 @@ def test_manual_clear():
     assert srlf._key_size() == 0
 
 
-def test_clear_with_custom_time():
+def test_clear_with_custom_time(request):
     """Test that manually clearing logs with a custom timestamp works."""
-    _log = logging.getLogger(get_test_name())
+    _log = logging.getLogger(request.node.name)
     _log.setLevel(logging.INFO)
     # Setup filter 1-second limit and default expire values that will be overridden.
     srlf = StreamRateLimitFilter(1)
@@ -343,9 +343,9 @@ def test_clear_with_custom_time():
     assert srlf._key_size() == 0
 
 
-def test_limited_stream_id_length():
+def test_limited_stream_id_length(request):
     """Test that limiting length of stream_id works."""
-    _log = logging.getLogger(get_test_name())
+    _log = logging.getLogger(request.node.name)
     _log.setLevel(logging.INFO)
     # Setup filter with maximum stream_id length.
     srlf = StreamRateLimitFilter(1, stream_id_max_len=10)

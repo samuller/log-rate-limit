@@ -21,10 +21,22 @@ jobs:
           - name: supported
             os: ubuntu-20.04
             python: 3.8
+            redis: 7.0-alpine3.18
           # Test everything with latest versions
           - name: latest
             os: ubuntu-22.04
             python: 3.x
+            redis: latest
+
+    services:
+      redis-lrl:
+        image: redis:${{ matrix.redis }}
+        # Set health checks to wait until redis  has started
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
     steps:
       - name: Check out repository code

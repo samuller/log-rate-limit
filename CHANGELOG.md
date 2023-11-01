@@ -7,9 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2023-11-01
+
 ### Added
 
-- Per-stream Rate-limiting data (cache) can now be stored in a Redis database if a `redis_url` is provided to the `StreamRateLimitFilter` constructor.
+- Per-stream rate-limiting data (cache) can now be stored in a Redis database if a `redis_url` is provided to the `StreamRateLimitFilter` constructor.
   - Using Redis allows multiple processes with a single output stream to share their rate-limiting, and it also allows cache to be monitored and controlled externally (e.g. if memory usage of rate-limiting cache becomes a concern for long-running processes).
 
 ## [1.3.0] - 2023-07-29

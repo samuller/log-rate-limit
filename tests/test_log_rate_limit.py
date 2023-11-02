@@ -423,7 +423,7 @@ def test_redis_use_hash_for_long_stream_ids(request):
     """Test that our Redis cache uses hashes for long stream IDs."""
     _log = logging.getLogger(request.node.name)
     _log.setLevel(logging.INFO)
-    # Setup filter with maximum stream_id length.
+    # Setup filter so all logs have a 1-second limit.
     srlf = StreamRateLimitFilter(1)
     _log.addFilter(srlf)
 
@@ -437,6 +437,44 @@ def test_redis_use_hash_for_long_stream_ids(request):
     else:
         # TODO: use same hashing for non-Redis code...
         assert set(srlf._streams.keys()) == {full_line}
+
+
+@pytest.mark.parametrize("url_for_redis", [None, REDIS_TEST_URL])
+def test_redis_sync_issue_with_delete(request):
+    """Test for sync issue when a stream is deleted/expired at the exact wrong time.
+
+    This duplicates a synchronization issue that's rare, except under high load.
+    """
+    _log = logging.getLogger(request.node.name)
+    _log.setLevel(logging.INFO)
+    # Setup filter so all logs have a 1-second limit.
+    srlf = StreamRateLimitFilter(1)
+    _log.addFilter(srlf)
+
+    # Add initial entry to Redis database.
+    _log.info("Line 1")
+
+    orig_func = StreamsCacheRedis.__getitem__
+
+    def wrap_and_clear(self, key):
+        """Wrapper function for __getitem__ that clears key after"""
+        nonlocal orig_func, srlf
+        # Call original wrapped function.
+        result = orig_func(self, key)
+        # Clear key afterwards.
+        del srlf._streams[key]
+        # del self[key]
+        return result
+
+    # Replace __getitem__ with wrap_and_clear function so that next time a streamit is called it will fetch the key
+    # from Redis, but then also remove it from Redis before processing can occur on the cached key.
+    StreamsCacheRedis.__getitem__ = wrap_and_clear
+    # Trigger our code that calls __getitem__ somewhere and then does processing on the cached object.
+    _log.info("Line 1")
+    # Reset __getitem__.
+    StreamsCacheRedis.__getitem__ = orig_func
+
+    _log.info("Line 1")
 
 
 def test_init_streams_cache_dict() -> None:

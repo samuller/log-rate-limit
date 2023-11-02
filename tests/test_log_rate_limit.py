@@ -441,9 +441,10 @@ def test_redis_use_hash_for_long_stream_ids(request):
 
 @pytest.mark.parametrize("url_for_redis", [None, REDIS_TEST_URL])
 def test_redis_sync_issue_with_delete(request):
-    """Test for sync issue when a stream is deleted/expired at the exact wrong time.
+    """Test for partial-object sync issue when a stream is deleted/expired at the exact wrong time.
 
-    This duplicates a synchronization issue that's rare, except under high load.
+    This duplicates a synchronization issue that's rare (except under high load), where a partial object is created
+    or left behind in the Redis database.
     """
     _log = logging.getLogger(request.node.name)
     _log.setLevel(logging.INFO)

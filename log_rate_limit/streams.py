@@ -93,9 +93,12 @@ class StreamInfoRedisProxy(StreamInfo):
 
     def __setattr__(self, prop: str, value: Any) -> None:
         """Update values locally and in redis."""
-        if prop not in ["redis", "redis_key"]:
-            self.redis.hset(name=self.redis_key, key=prop, value=value)
         super().__setattr__(prop, value)
+        if prop not in ["redis", "redis_key"]:
+            # Instead of only setting the property that was updated, we specifically set all the values together to
+            # ensure the object stays synchronized and has all properties. In case of synchronization issues where the
+            # key was already deleted, setting only a single property will create half-a-object without all the keys.
+            self.redis.hset(name=self.redis_key, mapping=dataclasses.asdict(self))
 
     @staticmethod
     def from_stream_info(redis: redis.Redis[Any], redis_key: str, stream_info: StreamInfo) -> StreamInfoRedisProxy:

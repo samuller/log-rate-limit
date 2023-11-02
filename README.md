@@ -37,6 +37,14 @@ All logs on `logger` will now be rate-limited, but this can be disabled per-log 
 logger.warning("Something went wrong!", extra=RateLimit(stream_id=None))
 ```
 
+If you have a log message that's continually changing (e.g. contains a timestamp), you can manually define how those messages are defined as similar enough to be rate-limited together by setting a custom `stream_id`:
+
+```python
+logger.warning("Something went wrong with %s at %s!", device_id, timestamp, extra=RateLimit(stream_id=f"went_wrong_{device_id}"))
+```
+
+Note that if the timestamps are added by a `logging.Formatter` then they won't affect our rate-limiting filter as these filters run before formatting is applied (see [full workflow](https://docs.python.org/3/howto/logging.html#logging-flow)).
+
 ## Usage examples
 
 ### Rate-limiting by default

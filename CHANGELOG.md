@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.1] - 2023-11-02
+
+### Fixed
+
+- Redis sync issue that causes `KeyError: 'next_valid_time'` error in rare (or high load) situations.
+
 ## [1.4.0] - 2023-11-01
 
 ### Added

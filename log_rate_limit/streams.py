@@ -98,7 +98,7 @@ class StreamInfoRedisProxy(StreamInfo):
             # Instead of only setting the property that was updated, we specifically set all the values together to
             # ensure the object stays synchronized and has all properties. In case of synchronization issues where the
             # key was already deleted, setting only a single property will create half-a-object without all the keys.
-            self.redis.hset(name=self.redis_key, mapping=dataclasses.asdict(self))
+            self.redis.hset(name=self.redis_key, mapping=dataclasses.asdict(self))  # type: ignore
 
     @staticmethod
     def from_stream_info(redis: redis.Redis[Any], redis_key: str, stream_info: StreamInfo) -> StreamInfoRedisProxy:

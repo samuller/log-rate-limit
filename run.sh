@@ -1,4 +1,5 @@
 #!/bin/bash
+# shellcheck disable=SC2034
 #
 # Script for running commonly used commands quickly, e.g. "./run.sh lint". See: "./run.sh help".
 #
@@ -6,13 +7,32 @@
 # Fail on first error.
 set -e
 
+man_help="List all commands available."
 help() {
-    echo "You have to provide a command to run, e.g. '$0 lint'"
+    local commands
+    # Fetch all functions declared in script.
     commands=$(compgen -A function | tr '\n' ' ')
-    echo "All commands available are: $commands"
+
+    # If column command is not available, create a no-op function to replace it and prevent errors.
+    # Alternatively, install it with: apt-get install -y bsdmainutils
+    if ! type column >/dev/null 2>&1
+    then function column { cat - ;}
+    fi
+
+    echo "You have to provide a command to run, e.g. '$0 lint'"
+    echo "All commands available are:"
+    echo
+    (
+        for cmd in ${commands}; do
+            doc_name=man_$cmd
+            echo -e "  $cmd\t\t\t${!doc_name}"
+        done
+    ) | column -t -s$'\t'
+    echo
     exit
 }
 
+man_lint="Perform lint, type and style checks on all Python code."
 lint() {
     echo "flake8..."
     poetry run flake8 log_rate_limit/
@@ -26,10 +46,12 @@ lint() {
     poetry run black --check log_rate_limit/ tests/
 }
 
+man_format="Format all Python code."
 format() {
     black log_rate_limit/ tests/
 }
 
+man_test="Run tests."
 test() {
     # --cov-context test
     # We add "test" contexts to see how many tests cover each line of code. This helps to spot overlapping coverage

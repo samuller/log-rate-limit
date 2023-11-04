@@ -3,12 +3,14 @@
 # https://stackoverflow.com/questions/44640479/type-annotation-for-classmethod-returning-instance
 from __future__ import annotations
 
-import redis
+import time
 import hashlib
 import dataclasses
 from dataclasses import dataclass
 from collections import defaultdict
 from typing import Dict, Optional, Protocol, Set, Any
+
+import redis
 
 
 # Type for possible values of a stream_id.
@@ -56,6 +58,45 @@ class StreamsCache(Protocol):  # pragma: no cover
     def keys(self) -> Any:  # Set[StreamID]:
         """Get an iterator of all streams cached under this prefix."""
         ...
+
+    def clear_old(self, expire_time_sec: float, current_time: Optional[float] = None, expire_msg: str = "") -> str:
+        """Clear old stream IDs to free up memory (in case of many large stream ID strings).
+
+        Parameters
+        ----------
+        expire_time_sec
+            Only clear out streams that haven't been reset in this period of time (in seconds). This is an amount of
+            time added after rate-limiting no longer applies anyway. Highly recommended to be a positive number.
+            Default is the expire offset configured at initialisation.
+        current_time
+            Optional parameter that can be used to call this function for different points in time.
+        expire_msg
+            Message format of logs used to report expired streams.
+        """
+        if current_time is None:
+            current_time = time.time()
+
+        # We build a string of keys to remove first since the alternative of looping through the dictionary and
+        # removing keys will require that we iterate through a copy of the dictionary's keys which is exactly
+        # the part which might be using excessive memory.
+        keys_to_remove = []
+        for stream_id in self.keys():
+            next_valid_time = self[stream_id].next_valid_time
+            # Daylight savings or other time changes might break or trigger this check during the transition period?
+            if (next_valid_time + expire_time_sec) < current_time:
+                keys_to_remove.append(stream_id)
+
+        expire_note = ""
+        for stream_id in keys_to_remove:
+            skip_count = self[stream_id].skipped_log_count
+            # If any logs were skipped, then we log it before clearing the cache.
+            if skip_count > 0:
+                added_msg = expire_msg.format(numskip=skip_count, stream_id=stream_id, expire_time_sec=expire_time_sec)
+                expire_note += f"\n{added_msg}"
+            # Remove keys
+            del self[stream_id]
+
+        return expire_note
 
 
 class StreamsCacheDict(defaultdict, StreamsCache):  # type: ignore

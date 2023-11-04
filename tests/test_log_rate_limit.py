@@ -380,7 +380,7 @@ def test_manual_clear(request):
     _log.info("Line 1")
     assert srlf._key_size() == 1
     # Test manually clearing when using default values.
-    srlf.clear_old_streams()
+    srlf._streams.clear_old(0)
     assert srlf._key_size() == 0
 
 
@@ -396,7 +396,7 @@ def test_clear_with_custom_time(request):
     assert srlf._key_size() == 0
     _log.info("Line 1")
     assert srlf._key_size() == 1
-    srlf.clear_old_streams(3600, time.time() + 3600 + 1)
+    srlf._streams.clear_old(3600, time.time() + 3600 + 1)
     assert srlf._key_size() == 0
 
 

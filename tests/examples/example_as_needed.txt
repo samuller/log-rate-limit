@@ -1,0 +1,4 @@
+INFO:__main__:Status update: 0
+INFO:__main__:Status update: 1
+INFO:__main__:Status update: 2
+WARNING:__main__:Issue!

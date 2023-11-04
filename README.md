@@ -76,7 +76,7 @@ Which only outputs the following:
 WARNING:__main__:Wolf!
 WARNING:__main__:No really, a wolf!
 WARNING:__main__:No really, a wolf!
-+ skipped 98 logs due to rate-limiting
+ + skipped 98 logs due to rate-limiting
 WARNING:__main__:Sheep!
 WARNING:__main__:Sheep!
 WARNING:__main__:Sheep!

@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 # Script for running commonly used commands quickly, e.g. "./run.sh lint". See: "./run.sh help".
 #

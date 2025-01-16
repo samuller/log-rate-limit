@@ -8,9 +8,10 @@ import hashlib
 import dataclasses
 from dataclasses import dataclass
 from collections import defaultdict
-from typing import Dict, Optional, Protocol, Set, Any
+from typing import Dict, Optional, Protocol, Set, Any, TYPE_CHECKING
 
-import redis
+if TYPE_CHECKING:
+    from redis import Redis
 
 
 # Type for possible values of a stream_id.
@@ -126,7 +127,7 @@ class StreamsCacheDict(defaultdict, StreamsCache):  # type: ignore
 class StreamInfoRedisProxy(StreamInfo):
     """An extension/wrapper of the StreamInfo object that sets values in Redis when attributes are updated."""
 
-    def __init__(self, redis: redis.Redis[Any], redis_key: str, **kwargs: Any) -> None:
+    def __init__(self, redis: "Redis[Any]", redis_key: str, **kwargs: Any) -> None:
         """Construct stream info redis proxy object."""
         self.redis = redis
         self.redis_key = redis_key
@@ -142,7 +143,7 @@ class StreamInfoRedisProxy(StreamInfo):
             self.redis.hset(name=self.redis_key, mapping=dataclasses.asdict(self))  # type: ignore
 
     @staticmethod
-    def from_stream_info(redis: redis.Redis[Any], redis_key: str, stream_info: StreamInfo) -> StreamInfoRedisProxy:
+    def from_stream_info(redis: "Redis[Any]", redis_key: str, stream_info: StreamInfo) -> StreamInfoRedisProxy:
         """Create a StreamInfoRedisProxy initialised with the values from a StreamInfo object."""
         return StreamInfoRedisProxy(redis=redis, redis_key=redis_key, **dataclasses.asdict(stream_info))
 
@@ -166,6 +167,8 @@ class StreamsCacheRedis(StreamsCache):
             of the cache are separate or whether their stream info is shared. Has to be less than 64 characters in
             length to limit total length of Redis keys.
         """
+        from redis import Redis
+
         # Redis keys should not be too long. See: https://redis.io/docs/manual/keyspace/.
         if len(redis_prefix) > 64:
             raise ValueError("redis_prefix string should be shorter than 64 characters.")
@@ -175,7 +178,7 @@ class StreamsCacheRedis(StreamsCache):
         # We try to follow general format of "app:feature:key" for our Redis keys. In this specific case that means our
         # keys are of the form: "log_rate_limit:streams:stream_id".
         self._prefix = f"{self.redis_prefix}:streams:"
-        self.redis = redis.Redis.from_url(url=redis_url, decode_responses=True)
+        self.redis = Redis.from_url(url=redis_url, decode_responses=True)
 
     def _key(self, key: StreamID) -> str:
         # Redis keys should not be too long. See: https://redis.io/docs/manual/keyspace/.

@@ -1,4 +1,5 @@
 """Module for the StreamRateLimitFilter class."""
+
 import time
 import logging
 from typing import Any, TypedDict, Optional, Literal

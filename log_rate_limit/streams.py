@@ -1,4 +1,5 @@
 """Module for the types and abstractions related to Streams."""
+
 # Postponed annotations will be automatic starting with Python 3.11.
 # https://stackoverflow.com/questions/44640479/type-annotation-for-classmethod-returning-instance
 from __future__ import annotations

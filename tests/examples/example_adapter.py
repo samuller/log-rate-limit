@@ -1,4 +1,5 @@
 """Example code used in the docs."""
+
 import logging
 from log_rate_limit import StreamRateLimitFilter, RateLimit
 

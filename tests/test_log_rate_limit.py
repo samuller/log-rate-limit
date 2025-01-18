@@ -38,12 +38,12 @@ def patch_redis_url(url_for_redis):
 
     try:
         # Override StreamRateLimitFilter during tests.
-        prevSRLF = StreamRateLimitFilter
+        prev_srlf = StreamRateLimitFilter
         StreamRateLimitFilter = SRLFWithCustomRedis
         yield
     finally:
         # Undo override.
-        StreamRateLimitFilter = prevSRLF
+        StreamRateLimitFilter = prev_srlf
         # Clear redis database between tests.
         import redis
 

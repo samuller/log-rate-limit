@@ -1,10 +1,10 @@
 """Module for the StreamRateLimitFilter class."""
 
-import time
 import logging
-from typing import Any, TypedDict, Optional, Literal
+import time
+from typing import Any, Literal, Optional, TypedDict
 
-from log_rate_limit.streams import StreamID, StreamsCacheDict, StreamsCacheRedis, StreamsCache
+from log_rate_limit.streams import StreamID, StreamsCache, StreamsCacheDict, StreamsCacheRedis
 
 # Used to enable extra code paths/checks during testing.
 TEST_MODE = False
@@ -34,11 +34,12 @@ class StreamRateLimitFilter(logging.Filter):
     events that you want to rate-limit in a similar fasion (or possibly even in the same stream as some other logs).
     """
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         # Rate-limiting.
         period_sec: float,
         allow_next_n: int = 0,
+        *,
         # Default behaviour.
         default_stream_id: DefaultStreamID = DefaultSID.LOG_MESSAGE,
         filter_undefined: bool = False,
@@ -58,7 +59,7 @@ class StreamRateLimitFilter(logging.Filter):
         redis_key_prefix: str = "log-rate-cache",
         # Debugging.
         print_config: bool = False,
-    ):
+    ) -> None:
         """Construct a logging filter that will limit rate of logs.
 
         Parameters
@@ -122,10 +123,14 @@ class StreamRateLimitFilter(logging.Filter):
 
         """
         super().__init__(name)
-        assert period_sec >= 0
-        assert allow_next_n >= 0
-        assert expire_check_sec >= 0
-        assert stream_id_max_len is None or stream_id_max_len > 0
+        if period_sec < 0:
+            raise ValueError("period_sec has to be positive")
+        if allow_next_n < 0:
+            raise ValueError("allow_next_n has to be positive")
+        if expire_check_sec < 0:
+            raise ValueError("expire_check_sec has to be positive")
+        if stream_id_max_len is not None and stream_id_max_len <= 0:
+            raise ValueError("stream_id_max_len has to be positive")
         # These values are all defaults that can be temporarily overriden on-the-fly.
         self._period_sec = period_sec
         self._allow_next_n = allow_next_n
@@ -151,7 +156,7 @@ class StreamRateLimitFilter(logging.Filter):
     def _print_config(self) -> None:
         print("StreamRateLimitFilter configuration:", self.__dict__)
 
-    def _get(self, record: logging.LogRecord, attribute: str, default_val: Any = None) -> Any:
+    def _get(self, record: logging.LogRecord, attribute: str, default_val: Any = None) -> Any:  # noqa: ANN401
         if hasattr(record, attribute):
             return getattr(record, attribute)
         return default_val

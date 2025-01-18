@@ -67,7 +67,7 @@ class StreamsCache(Protocol):  # pragma: no cover
         """Get length of mapped StreamIDs."""
         ...
 
-    def keys(self) -> Any:  # Set[StreamID]:
+    def keys(self) -> Any:  # Set[StreamID]:  # noqa: ANN401
         """Get an iterator of all streams cached under this prefix."""
         ...
 
@@ -140,13 +140,13 @@ class StreamsCacheDict(defaultdict, StreamsCache):  # type: ignore
 class StreamInfoRedisProxy(StreamInfo):
     """An extension/wrapper of the StreamInfo object that sets values in Redis when attributes are updated."""
 
-    def __init__(self, redis: "Redis[Any]", redis_key: str, **kwargs: Any) -> None:
+    def __init__(self, redis: "Redis[Any]", redis_key: str, **kwargs: Any) -> None:  # noqa: ANN401
         """Construct stream info redis proxy object."""
         self.redis = redis
         self.redis_key = redis_key
         super().__init__(**kwargs)
 
-    def __setattr__(self, prop: str, value: Any) -> None:
+    def __setattr__(self, prop: str, value: Any) -> None:  # noqa: ANN401
         """Update values locally and in redis."""
         super().__setattr__(prop, value)
         if prop not in ["redis", "redis_key"]:
@@ -203,7 +203,7 @@ class StreamsCacheRedis(StreamsCache):
         if len(full_key) > REDIS_MAX_STREAM_ID_LEN and key is not None:
             # We use MD5 as we want a hash that's fast, short and doesn't need to be very secure. We don't use Python's
             # string __hash__() function as it specifically randomizes the hash between Python process instances.
-            hash = hashlib.md5(key.encode(errors="backslashreplace")).hexdigest()
+            hash = hashlib.md5(key.encode(errors="backslashreplace")).hexdigest()  # noqa: S324
             short_key = key[0:REDIS_SHORT_STREAM_ID_LEN] + "..."
             # Expected max. length of new key is: (64+9)+(32+3)+(1+32+1) = 142.
             full_key = f"{self._prefix}{short_key}({hash})"

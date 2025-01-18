@@ -51,6 +51,18 @@ def patch_redis_url(url_for_redis):
         redis.flushdb()
 
 
+def test_invalid_options() -> None:
+    """Test checking for invalid intialisation options."""
+    with pytest.raises(ValueError):
+        StreamRateLimitFilter(period_sec=-1)
+    with pytest.raises(ValueError):
+        StreamRateLimitFilter(1, allow_next_n=-1)
+    with pytest.raises(ValueError):
+        StreamRateLimitFilter(1, expire_check_sec=-1)
+    with pytest.raises(ValueError):
+        StreamRateLimitFilter(1, stream_id_max_len=-1)
+
+
 @pytest.mark.parametrize("url_for_redis", [None, REDIS_TEST_URL])
 def test_print_config(capsys) -> None:
     """Test printing out of config options."""

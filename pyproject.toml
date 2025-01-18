@@ -49,7 +49,21 @@ line-length = 120
 line-length = 120
 
 [tool.ruff.lint]
-extend-select = ["E", "D"]
+extend-select = ["E", "D", "W", "C90", "YTT", "ASYNC", "ICN", "LOG", "INP",
+    "PYI", "ISC", "N", "B", "G", "FBT", "I", "S", "PL", "ANN",
+    "SIM", "RET", "TRY", "FURB", "DJ", "DTZ"
+]
+ignore = [
+    "TRY003",
+    # We prefer explicit over implicit
+    "RET501", "PLW0602",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Ignore some checks in tests
+"**/test*.py" = ["S101", "SIM115", "ANN", "PLR2004", "FBT003", "PLW0603", "INP"]
+# Ignore some checks in examples
+"**/examples/*.py" = ["S", "B007", "G004"]
 
 [tool.ruff.lint.mccabe]
 max-complexity = 10

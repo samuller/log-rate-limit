@@ -27,7 +27,7 @@ jobs:
             redis: 7.0-alpine3.18
           # Test everything with latest versions
           - name: latest
-            os: ubuntu-22.04
+            os: ubuntu-24.04
             python: 3.x
             redis: latest
 

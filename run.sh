@@ -68,6 +68,20 @@ if [ "$#" -gt 1 ]; then
     echo -n "Too many args. "
     help
 fi
+man_publish="Build and upload Python package."
+publish() {
+    # Make sure no local changes are distributed.
+    git stash
+
+    poetry build
+    echo "Package contents"
+    tar -tf $(ls -1t dist/*.tar.gz | head -n1)
+
+    read -s -p "Password: " PASSWORD
+    poetry publish -u __token__ -p $PASSWORD
+
+    git stash pop
+}
 
 # Run function with same name of CLI argument (default to "help").
 cmd=${1:-"help"}

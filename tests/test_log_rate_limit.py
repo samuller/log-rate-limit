@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import pytest
 import logging
@@ -498,3 +499,38 @@ def test_streams_cache_redis_set_item() -> None:
     scr = StreamsCacheRedis(redis_url=REDIS_TEST_URL)
     scr["TestKey1"] = StreamInfo(skipped_log_count=456)
     assert scr["TestKey1"].skipped_log_count == 456
+
+
+def test_redis_optional() -> None:
+    """Test that the redis dependency is truly optional in that it is only used when required.
+
+    Redis is however still required during development for running the whole test suite.
+    """
+    # Since it is hard to control imported modules while running this test in a group along with others, we only
+    # perform this extra check when that can be guaranteed. Recommended to run as follows:
+    #     FORCE_NO_REDIS=true pytest -k test_redis_optional
+    if os.getenv("FORCE_NO_REDIS") == "true":
+        # Confirm that redis has not yet been imported.
+        assert "redis" not in sys.modules, "Redis imported before test was run"
+    # Check if redis was imported before this test was run.
+    redis_module = None
+    if "redis" in sys.modules:
+        # Try to undo the redis import.
+        redis_module = sys.modules["redis"]
+        del sys.modules["redis"]
+    try:
+        from log_rate_limit import StreamRateLimitFilter
+
+        # This check actually only works correctly if the "log_rate_limit" module had never been imported before this
+        # test was run since re-importing a module won't actually do anything as imports as cached.
+        assert "redis" not in sys.modules, "Redis imported by log_rate_limit"
+        StreamRateLimitFilter(period_sec=1)
+        assert "redis" not in sys.modules, "Redis imported by filter that doesn't use it"
+        # Check that redis is now suddenly imported when needed.
+        StreamRateLimitFilter(period_sec=1, redis_url=REDIS_TEST_URL)
+        assert "redis" in sys.modules, "Redis failed to import when required"
+    # Test clean-up.
+    finally:
+        # Undo test's module manipulations.
+        if redis_module is not None:
+            sys.modules["redis"] = redis_module

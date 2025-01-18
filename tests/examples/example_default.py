@@ -1,8 +1,9 @@
 """Example code used in the docs."""
 
-import time
 import logging
-from log_rate_limit import StreamRateLimitFilter, RateLimit
+import time
+
+from log_rate_limit import RateLimit, StreamRateLimitFilter
 
 # Setup logging
 logging.basicConfig()

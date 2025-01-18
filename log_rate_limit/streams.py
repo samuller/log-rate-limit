@@ -4,12 +4,12 @@
 # https://stackoverflow.com/questions/44640479/type-annotation-for-classmethod-returning-instance
 from __future__ import annotations
 
-import time
-import hashlib
 import dataclasses
-from dataclasses import dataclass
+import hashlib
+import time
 from collections import defaultdict
-from typing import Dict, Optional, Protocol, Set, Any, TYPE_CHECKING
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Dict, Optional, Protocol, Set
 
 if TYPE_CHECKING:  # pragma: no cover
     from redis import Redis

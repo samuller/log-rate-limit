@@ -1,7 +1,8 @@
 """Example code used in the docs."""
 
 import logging
-from log_rate_limit import StreamRateLimitFilter, RateLimit, DefaultSID
+
+from log_rate_limit import DefaultSID, RateLimit, StreamRateLimitFilter
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

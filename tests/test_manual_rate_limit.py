@@ -3,7 +3,7 @@
 import time
 from unittest.mock import patch
 
-from log_rate_limit import StreamRateLimitFilter, DefaultSID
+from log_rate_limit import DefaultSID, StreamRateLimitFilter
 
 
 @patch("log_rate_limit.log_rate_limit.TEST_MODE", True)

@@ -1,17 +1,16 @@
 """Tests for main log_rate_limit functionality."""
 
+import logging
 import os
 import sys
 import time
-import pytest
-import logging
 from unittest.mock import patch
 
-from log_rate_limit import StreamRateLimitFilter, RateLimit, DefaultSID
-from log_rate_limit.streams import StreamsCacheDict, StreamInfo, StreamsCacheRedis
-
+import pytest
 from utils import generate_lines
 
+from log_rate_limit import DefaultSID, RateLimit, StreamRateLimitFilter
+from log_rate_limit.streams import StreamInfo, StreamsCacheDict, StreamsCacheRedis
 
 REDIS_TEST_URL = os.getenv("REDIS_TEST_URL", "redis://redis-lrl:6379")
 

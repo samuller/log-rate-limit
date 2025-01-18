@@ -22,7 +22,7 @@ The default can also be changed so that rate-limiting is disabled by default and
 Import the filter:
 
 ```python
-from log_rate_limit import StreamRateLimitFilter, RateLimit
+from log_rate_limit import RateLimit, StreamRateLimitFilter
 ```
 
 Use the filter with your `logger` - with default parameters it will rate-limit all repetitive log messages:
@@ -51,9 +51,10 @@ Note that if the timestamps are added by a `logging.Formatter` then they won't a
 
 Example of rate-limiting with default options where each log message is assigned to its own stream:
 ```python
-import time
 import logging
-from log_rate_limit import StreamRateLimitFilter, RateLimit
+import time
+from log_rate_limit import RateLimit, StreamRateLimitFilter
+
 # Setup logging
 logging.basicConfig()
 logger = logging.getLogger(__name__)
@@ -92,7 +93,8 @@ When we override rate-limiting above, you'll see our filter reads dynamic config
 If you want most of your logs to be unaffected and you only have some you want to specifically rate-limit, then you can do the following:
 ```python
 import logging
-from log_rate_limit import StreamRateLimitFilter, RateLimit
+from log_rate_limit import RateLimit, StreamRateLimitFilter
+
 # Setup logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -130,7 +132,7 @@ logger.debug("Info", extra=RateLimit(stream_id="stream2"))
 If you want to set custom options for a large group of log calls without repeatedly adding the `extra` parameter, it's possible to use a [LoggerAdapter](https://docs.python.org/3/library/logging.html#loggeradapter-objects):
 ```python
 import logging
-from log_rate_limit import StreamRateLimitFilter, RateLimit
+from log_rate_limit import RateLimit, StreamRateLimitFilter
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

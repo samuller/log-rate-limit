@@ -1,4 +1,5 @@
 """Test that examples in our documentation have correct matching outputs."""
+
 import os
 import sys
 import subprocess

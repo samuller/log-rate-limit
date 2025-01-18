@@ -1,4 +1,5 @@
 """Test functionality to use StreamRateLimitFilter directly for manual rate limiting."""
+
 import time
 from unittest.mock import patch
 

@@ -1,4 +1,5 @@
 """Tests for main log_rate_limit functionality."""
+
 import os
 import sys
 import time

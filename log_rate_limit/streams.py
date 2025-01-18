@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from collections import defaultdict
 from typing import Dict, Optional, Protocol, Set, Any, TYPE_CHECKING
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from redis import Redis
 
 
@@ -34,7 +34,7 @@ class StreamInfo:
 class StreamsCache(Protocol):  # pragma: no cover
     """Interface for StreamsCache that maps stream IDs to stream info.
 
-    This interface mainly matches that of a dictionary and allow us to abstract away how the data is stored. The
+    This interface mainly matches that of a dictionary and allows us to abstract away how the data is stored. The
     default is to just store it in-memory as a Python dictionary with StreamsCacheDict, but it's also possible to store
     it externally (out-of-process) in a Redis storage with StreamsCacheRedis (where the cache could even be shared with
     other processes).
@@ -167,6 +167,7 @@ class StreamsCacheRedis(StreamsCache):
             of the cache are separate or whether their stream info is shared. Has to be less than 64 characters in
             length to limit total length of Redis keys.
         """
+        # We import redis only if this class is used so that the dependency remains optional when unused.
         from redis import Redis
 
         # Redis keys should not be too long. See: https://redis.io/docs/manual/keyspace/.

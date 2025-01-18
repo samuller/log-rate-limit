@@ -26,16 +26,14 @@ help() {
 
 man_lint="Perform lint, type and style checks on all Python code."
 lint() {
-    echo "flake8..."
-    poetry run flake8 log_rate_limit/
-    # We're not as strict about docstrings in our tests
-    poetry run flake8 --extend-ignore=D tests/
+    echo "ruff check..."
+    poetry run ruff check .
+    echo "ruff format..."
+    poetry run ruff format --check .
     echo "mypy..."
     poetry run mypy --strict --implicit-reexport log_rate_limit/
     # No "strict" type requirements for tests.
     poetry run mypy tests/
-    echo "black..."
-    poetry run black --check log_rate_limit/ tests/
 }
 
 man_format="Format all Python code."

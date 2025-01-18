@@ -83,6 +83,14 @@ publish() {
     git stash pop
 }
 
+man_check_version="Check consistency of newest version in code and docs."
+check-version() {
+    PROJECT_VERSION=$(cat pyproject.toml | grep "^version = " | sed "s/^version =//" | tr -d '" ')
+    CHANGE_VERSION=$(cat CHANGELOG.md | grep "## \[[[:digit:]]" | cut -d'-' -f1 | sed "s/## //" | tr -d "[] " | head -n1)
+    # Run "test" from system command instead of local function
+    $(which test) "$PROJECT_VERSION" = "$CHANGE_VERSION"
+}
+
 # Run function with same name of CLI argument (default to "help").
 cmd=${1:-"help"}
 $cmd

@@ -1,3 +1,4 @@
+"""Tests for main log_rate_limit functionality."""
 import os
 import sys
 import time
@@ -16,11 +17,13 @@ REDIS_TEST_URL = os.getenv("REDIS_TEST_URL", "redis://redis-lrl:6379")
 
 @pytest.fixture()
 def url_for_redis():
+    """URL pointing to a Redis server."""
     return None
 
 
 @pytest.fixture(autouse=True)
 def patch_redis_url(url_for_redis):
+    """For all tests, setup Redis filtering whenever url_for_redis is defined."""
     if url_for_redis is None:
         # Have this fixture do nothing.
         yield
@@ -50,6 +53,7 @@ def patch_redis_url(url_for_redis):
 
 @pytest.mark.parametrize("url_for_redis", [None, REDIS_TEST_URL])
 def test_print_config(capsys) -> None:
+    """Test printing out of config options."""
     StreamRateLimitFilter(1, print_config=True)
     output = capsys.readouterr().out
     assert output.startswith("StreamRateLimitFilter configuration: {")
@@ -459,7 +463,7 @@ def test_redis_sync_issue_with_delete(request):
     orig_func = StreamsCacheRedis.__getitem__
 
     def wrap_and_clear(self, key):
-        """Wrapper function for __getitem__ that clears key after"""
+        """Use this function to wrap __getitem__ so that it will clear keys after use."""
         nonlocal orig_func, srlf
         # Call original wrapped function.
         result = orig_func(self, key)

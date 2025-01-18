@@ -74,6 +74,7 @@ class StreamsCache(Protocol):  # pragma: no cover
             Optional parameter that can be used to call this function for different points in time.
         expire_msg
             Message format of logs used to report expired streams.
+
         """
         if current_time is None:
             current_time = time.time()
@@ -114,6 +115,7 @@ class StreamsCacheDict(defaultdict, StreamsCache):  # type: ignore
         ----------
         built_dict
             Optional argument to initialise this cache with a pre-defined dictionary.
+
         """
         default_factory = StreamInfo
         if built_dict is None:
@@ -167,6 +169,7 @@ class StreamsCacheRedis(StreamsCache):
             A prefix string to add to all keys used in Redis. This can be used to determine whether separate instances
             of the cache are separate or whether their stream info is shared. Has to be less than 64 characters in
             length to limit total length of Redis keys.
+
         """
         # We import redis only if this class is used so that the dependency remains optional when unused.
         from redis import Redis

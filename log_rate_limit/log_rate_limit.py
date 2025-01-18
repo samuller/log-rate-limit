@@ -113,12 +113,13 @@ class StreamRateLimitFilter(logging.Filter):
             If a Redis database URL is provided then per-stream details will be cached in a the given Redis database
             rather than in a dictionary in the current process's memory. Using Redis allows multiple processes with a
             single output stream to share their rate-limiting, and it also allows cache to be monitored externally.
-        redis_prefix
+        redis_key_prefix
             A prefix string to add to all keys used in Redis. This can be used to determine whether separate instances
             of the cache are separate or whether their stream info is shared. Has to be less than 64 characters in
             length to limit total length of Redis keys.
         print_config
             At initialisation, print the configuration options provided to this class.
+
         """
         super().__init__(name)
         assert period_sec >= 0
@@ -176,6 +177,7 @@ class StreamRateLimitFilter(logging.Filter):
         Return
         ------
         True if the trigger was allowed to fire (enough time has passed) and has been reset.
+
         """
         if self.should_trigger(stream_id, current_time):
             self.reset_trigger(stream_id, override_period_sec, current_time)
@@ -195,6 +197,7 @@ class StreamRateLimitFilter(logging.Filter):
         Return
         ------
         True if enough time has passed that this stream is able to trigger.
+
         """
         if current_time is None:
             current_time = time.time()
@@ -220,6 +223,7 @@ class StreamRateLimitFilter(logging.Filter):
             default value defined when this class was instantiated.
         current_time
             Optional parameter that can be used to call this function for different points in time.
+
         """
         if override_period_sec is None:
             override_period_sec = self._period_sec
@@ -268,6 +272,7 @@ class StreamRateLimitFilter(logging.Filter):
         Returns
         -------
         True if log should be shown or else False if log should be skipped/hidden/filtered out.
+
         """
         global TEST_MODE
         if TEST_MODE:

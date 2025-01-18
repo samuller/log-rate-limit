@@ -1,3 +1,4 @@
+"""Test that examples in our documentation have correct matching outputs."""
 import os
 import sys
 import subprocess
@@ -9,6 +10,7 @@ import pytest
 
 @pytest.fixture()
 def example_name():
+    """Name of the example - used for both the code and output text file."""
     return None
 
 

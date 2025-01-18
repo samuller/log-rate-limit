@@ -70,3 +70,6 @@ jobs:
         with:
           name: code-coverage
           path: htmlcov
+          # Ignore errors where parallel execution causes conflicting uploads
+          # See: https://github.com/actions/upload-artifact/issues/506
+          continue-on-error: true

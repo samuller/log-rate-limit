@@ -9,24 +9,14 @@ set -e
 
 man_help="List all commands available."
 help() {
-    local commands
-    # Fetch all functions declared in script.
-    commands=$(compgen -A function | tr '\n' ' ')
-    # List declared functions that are not from exports (-fx).
-    # commands=$(echo "$KNOWN_COMMANDS" | cut -d' ' -f 3 | tr '\n' ' ')
-
-    # If column command is not available, create a no-op function to replace it and prevent errors.
-    # Alternatively, install it with: apt-get install -y bsdmainutils
-    if ! type column >/dev/null 2>&1
-    then function column { cat - ;}
-    fi
-
     echo "You have to provide a command to run, e.g. '$0 lint'"
+    # List declared functions that are not from exports (-fx).
+    commands=$(echo "$KNOWN_COMMANDS" | cut -d' ' -f 3 | tr '\n' ' ')
     echo "All commands available are:"
     echo
     (
         for cmd in ${commands}; do
-            doc_name=man_$cmd
+            doc_name=man_$(echo "$cmd" | tr - _)
             echo -e "  $cmd\t\t\t${!doc_name}"
         done
     ) | column -t -s$'\t'
@@ -90,6 +80,16 @@ check-version() {
     # Run "test" from system command instead of local function
     $(which test) "$PROJECT_VERSION" = "$CHANGE_VERSION"
 }
+
+
+# Find all declared functions that are not from exports (-fx). This will only pick up functions before this point.
+KNOWN_COMMANDS=$(declare -F | grep -v "\-fx")
+
+# If column command is not available, create a no-op function to replace it and prevent errors.
+# Alternatively, install it with: apt-get install -y bsdmainutils
+if ! type column >/dev/null 2>&1
+then function column { cat - ;}
+fi
 
 # Run function with same name of CLI argument (default to "help").
 cmd=${1:-"help"}

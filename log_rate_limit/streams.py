@@ -15,6 +15,16 @@ if TYPE_CHECKING:  # pragma: no cover
     from redis import Redis
 
 
+# Redis keys should not be too long and we try to keep ours under 256 characters in length. Since our keys follow a
+# schema format that consists of multiple sections, we limit the length of each section to limit the max length of the
+# whole key.
+REDIS_MAX_PREFIX_LEN = 64
+# If the StreamID is longer than this, then our Redis key will use a hash of StreamID.
+REDIS_MAX_STREAM_ID_LEN = 192
+# When long StreamIDs are hashed, we'll still use the initial portion of the StreamID to make the keys easier to
+# understand - up to this many characters.
+REDIS_SHORT_STREAM_ID_LEN = 32
+
 # Type for possible values of a stream_id.
 StreamID = Optional[str]
 
@@ -175,8 +185,8 @@ class StreamsCacheRedis(StreamsCache):
         from redis import Redis
 
         # Redis keys should not be too long. See: https://redis.io/docs/manual/keyspace/.
-        if len(redis_prefix) > 64:
-            raise ValueError("redis_prefix string should be shorter than 64 characters.")
+        if len(redis_prefix) > REDIS_MAX_PREFIX_LEN:
+            raise ValueError(f"redis_prefix string should be shorter than {REDIS_MAX_PREFIX_LEN} characters.")
         super().__init__()
         self.redis_url = redis_url
         self.redis_prefix = redis_prefix
@@ -190,12 +200,12 @@ class StreamsCacheRedis(StreamsCache):
         full_key = f"{self._prefix}{key}"
         # Hash long stream IDs. 192 limit chosen as half-way between 128 & 256. 128 is too short as it's shorter than
         # our max hashed length.
-        if len(full_key) > 192 and key is not None:
+        if len(full_key) > REDIS_MAX_STREAM_ID_LEN and key is not None:
             # We use MD5 as we want a hash that's fast, short and doesn't need to be very secure. We don't use Python's
             # string __hash__() function as it specifically randomizes the hash between Python process instances.
             hash = hashlib.md5(key.encode(errors="backslashreplace")).hexdigest()
-            short_key = key[0:32] + "..."
-            # Expected max. length of new key is: 64+9+35+2+32 = 142.
+            short_key = key[0:REDIS_SHORT_STREAM_ID_LEN] + "..."
+            # Expected max. length of new key is: (64+9)+(32+3)+(1+32+1) = 142.
             full_key = f"{self._prefix}{short_key}({hash})"
         return full_key
 

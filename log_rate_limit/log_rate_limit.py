@@ -108,8 +108,9 @@ class StreamRateLimitFilter(logging.Filter):
         stream_id_max_len
             If set, this defines a maximum length for the stream names (stream_id strings). If set to None (the
             default) then there is no limit. Be aware that while setting this would help limit memory usage, it will
-            also make it very easy for similar log messages to get assigned to the same stream and get confused with
-            each other.
+            also make it very easy for similar log messages to get assigned to the same stream and get unintentionally
+            confused with one another (which is behaviour that should rather be controlled by correctly defining
+            stream_id strings to determine how you want to define uniqueness).
         redis_url
             If a Redis database URL is provided then per-stream details will be cached in a the given Redis database
             rather than in a dictionary in the current process's memory. Using Redis allows multiple processes with a

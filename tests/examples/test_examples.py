@@ -9,7 +9,7 @@ from pathlib import Path
 import pytest
 
 
-@pytest.fixture()
+@pytest.fixture
 def example_name():
     """Name of the example - used for both the code and output text file."""
     return None

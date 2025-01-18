@@ -15,7 +15,7 @@ from log_rate_limit.streams import StreamInfo, StreamsCacheDict, StreamsCacheRed
 REDIS_TEST_URL = os.getenv("REDIS_TEST_URL", "redis://redis-lrl:6379")
 
 
-@pytest.fixture()
+@pytest.fixture
 def url_for_redis():
     """URL pointing to a Redis server."""
     return None
@@ -53,13 +53,13 @@ def patch_redis_url(url_for_redis):
 
 def test_invalid_options() -> None:
     """Test checking for invalid intialisation options."""
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="period_sec has to be positive"):
         StreamRateLimitFilter(period_sec=-1)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="allow_next_n has to be positive"):
         StreamRateLimitFilter(1, allow_next_n=-1)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="expire_check_sec has to be positive"):
         StreamRateLimitFilter(1, expire_check_sec=-1)
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="stream_id_max_len has to be positive"):
         StreamRateLimitFilter(1, stream_id_max_len=-1)
 
 
@@ -503,9 +503,11 @@ def test_init_streams_cache_dict() -> None:
 
 def test_scr_prefix_key_limit() -> None:
     """Test use of StreamsCacheRedis's __setitem__ (for code coverage)."""
-    long_string = ("1234567890" * 6) + "12345"
-    assert len(long_string) == 65
-    with pytest.raises(ValueError) as exc_info:
+    limit = 64
+    long_string = ("1234567890" * (limit // 10)) + "12345"
+    assert len(long_string) == limit + 1
+    err_msg = f"redis_prefix string should be shorter than {limit} characters."
+    with pytest.raises(ValueError, match=err_msg) as exc_info:
         StreamsCacheRedis(redis_url=REDIS_TEST_URL, redis_prefix=long_string)
     assert str(exc_info.value) == "redis_prefix string should be shorter than 64 characters."
 

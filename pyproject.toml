@@ -50,7 +50,7 @@ line-length = 120
 
 [tool.ruff.lint]
 extend-select = ["E", "D", "W", "C90", "YTT", "ASYNC", "ICN", "LOG", "INP",
-    "PYI", "ISC", "N", "B", "G", "FBT", "I", "S", "PL", "ANN",
+    "PYI", "ISC", "N", "B", "G", "FBT", "I", "S", "PL", "ANN", "PT",
     "SIM", "RET", "TRY", "FURB", "DJ", "DTZ"
 ]
 ignore = [

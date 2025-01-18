@@ -60,6 +60,7 @@ test() {
     poetry run pytest --verbose --cov=log_rate_limit --cov-branch --cov-context test \
         --cov-report=term --cov-report=html --cov-fail-under=100
     FORCE_NO_REDIS=true pytest -k test_redis_optional
+    FORCE_NO_REDIS=true poetry run pytest -k test_redis_optional
 }
 
 if [ "$#" -gt 1 ]; then

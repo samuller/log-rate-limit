@@ -4,6 +4,9 @@ name: tests
 on:
   # Run this workflow every time a new commit is pushed to repo
   push:
+  # Or when pull requests are opened
+  pull_request:
+    types: [opened, reopened]
   # Also run it once weekly to check for impact due to changes in the OS,
   # python, postgres, or any external packages/dependencies
   schedule:

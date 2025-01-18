@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- Redis dependency is correctly optional and only required when actually used.
+- Redis dependency is now correctly optional and only required when actually used.
 
 ## [1.4.1] - 2023-11-02
 

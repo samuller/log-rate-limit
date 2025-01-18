@@ -12,6 +12,8 @@ help() {
     local commands
     # Fetch all functions declared in script.
     commands=$(compgen -A function | tr '\n' ' ')
+    # List declared functions that are not from exports (-fx).
+    # commands=$(echo "$KNOWN_COMMANDS" | cut -d' ' -f 3 | tr '\n' ' ')
 
     # If column command is not available, create a no-op function to replace it and prevent errors.
     # Alternatively, install it with: apt-get install -y bsdmainutils

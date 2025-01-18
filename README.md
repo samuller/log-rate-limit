@@ -85,7 +85,7 @@ Note that (unless overridden) logs were only repeated after the `sleep()` call, 
 
 When we override rate-limiting above, you'll see our filter reads dynamic configs from logging's `extra` parameter.
 
-> Be very careful not to forget the `extra=` name part of the argument, as then the logging framework will assume you're passing arguments meant for formatting in the logging message and your options will silently be ignored!
+> Be very careful not to forget the `extra=` name part of the argument, as then Python's logging framework will assume you're passing arguments meant for formatting in the logging message and your options will silently be ignored!
 
 ### Rate-limit only when specified
 

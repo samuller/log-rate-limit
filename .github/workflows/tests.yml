@@ -22,7 +22,7 @@ jobs:
         include:
           # Test with specific supported versions
           - name: supported
-            os: ubuntu-20.04
+            os: ubuntu-22.04
             python: 3.8
             redis: 7.0-alpine3.18
           # Test everything with latest versions
